@@ -1,0 +1,17 @@
+# Packages
+__pycache__
+
+# Virtual environment
+venv
+
+# IDE
+.idea
+
+# SQLite databases
+*.sqlite
+
+# Environment files
+.env
+
+output
+logs
