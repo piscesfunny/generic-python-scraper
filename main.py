@@ -10,6 +10,9 @@ from apps.alibaba import start_scrapper as alibaba_start_scrapper
 if __name__ == '__main__':
     os.makedirs(LOG_DIR, exist_ok=True)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(OUTPUT_LIST_DIR, exist_ok=True)
+    os.makedirs(OUTPUT_RESULT_DIR, exist_ok=True)
+    os.makedirs(OUTPUT_MEDIA_URL_LIST_DIR, exist_ok=True)
     os.makedirs(OUTPUT_IMG_DIR, exist_ok=True)
     os.makedirs(OUTPUT_VIDEO_DIR, exist_ok=True)
     os.makedirs(OUTPUT_DOC_DIR, exist_ok=True)

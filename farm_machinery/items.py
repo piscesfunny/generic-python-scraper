@@ -41,6 +41,14 @@ class FarmMachineryItem(Item):
         input_processor=MapCompose(str.strip),
         output_processor=Join()
     )
+    item_url = Field(
+        input_processor=MapCompose(str.strip),
+        output_processor=Join()
+    )
+    website = Field(
+        input_processor=MapCompose(str.strip),
+        output_processor=Join()
+    )
 
     def __repr__(self):
         """only print out attr1 after exiting the Pipeline"""

@@ -1,16 +1,14 @@
+import json
 import os
 import time
 import scrapy
 import wget
+import csv
 
-from urllib.error import HTTPError
 from scrapy.loader import ItemLoader
 from scrapy.selector import Selector
 from scrapy.utils.project import get_project_settings
 from selenium import webdriver
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 
 from farm_machinery.items import FarmMachineryItem
 from utils.config import *
@@ -40,6 +38,8 @@ class AlibabaSpider(scrapy.Spider):
         self.action_type = param['action_type']
         self.target_category = param['target_category']
         self.scraping_target = param['scraping_target']
+        self.list_file_path = param['list_file_path']
+        self.media_urls_file_path = param['media_urls_file_path']
 
     def start_requests(self):
         for url in self.start_urls:
@@ -71,7 +71,8 @@ class AlibabaSpider(scrapy.Spider):
             if name in non_target_category_names:
                 continue
 
-            category = {'name': name, 'url': url}
+            modified_name = name.replace(' ', '-').replace('&', '-')
+            category = {'name': modified_name, 'url': url}
             categories.append(category)
 
         if self.action_type == ACTION_GET_CATEGORY:
@@ -84,9 +85,7 @@ class AlibabaSpider(scrapy.Spider):
                     category_name = category['name']
                     category_url = category['url']
                     if category_name == self.target_category:
-                        # category_full_url = f'{category_url}?spm=a27aq.13891069.1148563840.43.31fe5df94lgO5F'
                         category_full_url = f'{category_url}'
-                        # category_full_url = f"http://api.scraperapi.com?api_key=3fa50cf1d8e5e310542a54b77c6f0e9b&url={category_url}"
 
                         driver = self.initialize_chrome_driver()
                         driver.get(url=category_full_url)
@@ -96,9 +95,13 @@ class AlibabaSpider(scrapy.Spider):
                         driver.close()
 
                         item_selectors = scrapy_selector.css('.listbase > .grid-list-flex .grid-col-item-wrapper')
-
+                        item_urls = []
                         for item_selector in item_selectors:
                             item_url = item_selector.css('.grid-col-item > .hg-product > a.product-detail::attr(href)').get()
+                            if item_url in item_urls:
+                                continue
+
+                            item_urls.append(item_url)
 
                             yield {
                                 'item_url': response.urljoin(item_url)
@@ -107,17 +110,24 @@ class AlibabaSpider(scrapy.Spider):
             elif self.scraping_target == SCRAPPING_TARGET_ITEM:
                 headers = self.default_headers
                 headers['referer'] = response.request.url
-                item_url = 'https://www.alibaba.com/product-detail/High-efficiency-tractors-price-120HP-4wd_62520569148.html?spm=a27aq.13891069.2.1.138b5736ERnxoY'
 
-                yield scrapy.Request(
-                    url=item_url, callback=self.parse_items, headers=headers,
-                    meta={'category': self.target_category}
-                )
+                with open(self.list_file_path) as f:
+                    item_urls = json.load(f)
+                    for item_url_dict in item_urls:
+                        url = item_url_dict['item_url']
+
+                        yield scrapy.Request(
+                            url=url, callback=self.parse_items, headers=headers,
+                            meta={'category': self.target_category}
+                        )
+
+                        time.sleep(1)
         else:
             pass
 
     def parse_items(self, response):
-        self.logger.info('Parse Items !!!')
+        request_url = response.request.url
+        self.logger.info(f'Parse Items - {request_url}')
 
         category = response.meta['category']
         name = response.css('.ma-title::text').get()
@@ -182,7 +192,7 @@ class AlibabaSpider(scrapy.Spider):
         }
 
         for (k, v) in raw_item.items():
-            if not v:
+            if v is None:
                 raw_item[k] = ''
 
         loader = ItemLoader(item=FarmMachineryItem())
@@ -195,33 +205,39 @@ class AlibabaSpider(scrapy.Spider):
         loader.add_value('img_urls', img_urls_str)
         loader.add_value('video_urls', video_urls_str)
         loader.add_value('doc_urls', doc_urls_str)
+        loader.add_value('item_url', request_url)
         loader.add_value('website', 'http://www.alibaba.com')
 
         item = loader.load_item()
 
-        for url in img_urls:
-            fn = os.path.split(url)[1]
-            if fn in self.existing_img_fns:
-                continue
-
-            try:
-                fn = wget.download(url=url, out=OUTPUT_IMG_DIR)
-                self.logger.info(f'Image Download Success: {fn}')
-            except:
-                self.logger.info(f'Image Download Failed: {fn}')
-
-        for url in video_urls:
-            fn = os.path.split(url)[1]
-            if fn in self.existing_video_fns:
-                continue
-
-            try:
-                fn = wget.download(url=url, out=OUTPUT_VIDEO_DIR)
-                self.logger.info(f'Video Download Success: {fn}')
-            except HTTPError:
-                self.logger.info(f'Video Download Failed: {fn}')
-
         yield item
+
+        media_urls = img_urls + video_urls + doc_urls
+        with open(self.media_urls_file_path, "a") as f:
+            for url in media_urls:
+                f.write(f'{url}\n')
+
+        # for url in img_urls:
+        #     fn = os.path.split(url)[1]
+        #     if fn in self.existing_img_fns:
+        #         continue
+        #
+        #     try:
+        #         fn = wget.download(url=url, out=OUTPUT_IMG_DIR)
+        #         self.logger.info(f'Image Download Success: {fn}')
+        #     except:
+        #         self.logger.info(f'Image Download Failed: {fn}')
+        #
+        # for url in video_urls:
+        #     fn = os.path.split(url)[1]
+        #     if fn in self.existing_video_fns:
+        #         continue
+        #
+        #     try:
+        #         fn = wget.download(url=url, out=OUTPUT_VIDEO_DIR)
+        #         self.logger.info(f'Video Download Success: {fn}')
+        #     except:
+        #         self.logger.info(f'Video Download Failed: {fn}')
 
     def download_files(self, response):
         self.logger.info('File Saving Handler !!!')
