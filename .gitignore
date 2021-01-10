@@ -13,5 +13,6 @@ venv
 # Environment files
 .env
 
+input
 output
 logs

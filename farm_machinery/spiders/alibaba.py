@@ -1,6 +1,10 @@
+import os
 import time
 import scrapy
+import wget
 
+from urllib.error import HTTPError
+from scrapy.loader import ItemLoader
 from scrapy.selector import Selector
 from scrapy.utils.project import get_project_settings
 from selenium import webdriver
@@ -8,6 +12,9 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
+from farm_machinery.items import FarmMachineryItem
+from utils.config import *
+from utils.constants import *
 from utils.logging import ScraperLogger
 
 
@@ -25,6 +32,13 @@ class AlibabaSpider(scrapy.Spider):
 
         settings = get_project_settings()
         self.default_headers = settings.get('DEFAULT_REQUEST_HEADERS')
+
+        self.existing_img_fns = param['existing_fns']['existing_img_fns']
+        self.existing_video_fns = param['existing_fns']['existing_video_fns']
+        self.existing_doc_fns = param['existing_fns']['existing_doc_fns']
+
+        self.action_type = param['action_type']
+        self.target_category = param['target_category']
 
     def start_requests(self):
         for url in self.start_urls:
@@ -53,49 +67,55 @@ class AlibabaSpider(scrapy.Spider):
         for selector in category_selectors:
             name = selector.css('.name > a::text').get()
             url = selector.css('.name > a::attr(href)').get()
-
             if name in non_target_category_names:
                 continue
 
-            categories.append({
-                'name': name,
-                'url': url,
-            })
+            category = {'name': name, 'url': url}
+            categories.append(category)
 
-        headers = self.default_headers
-        headers['referer'] = response.request.url
+        if self.action_type == ACTION_GET_CATEGORY:
+            for category in categories:
+                yield category
 
-        for category in categories:
-            category_name = category['name']
-            category_url = category['url']
-            if category_name == 'Tractors':
-                category_full_url = f'{category_url}?spm=a27aq.13891069.1148563840.43.31fe5df94lgO5F'
+        elif self.action_type == ACTION_SCRAPPING:
+            headers = self.default_headers
+            headers['referer'] = response.request.url
 
-                # driver = self.initialize_chrome_driver()
-                # driver.get(url=category_full_url)
-                # page_source = self.scrollToBottom(driver)
-                # page_source = driver.page_source
+            for category in categories:
+                category_name = category['name']
+                category_url = category['url']
+                if category_name == self.target_category:
+                    category_full_url = f'{category_url}?spm=a27aq.13891069.1148563840.43.31fe5df94lgO5F'
 
-                # scrapy_selector = Selector(text=page_source)
+                    driver = self.initialize_chrome_driver()
+                    driver.get(url=category_full_url)
+                    page_source = self.scrollToBottom(driver)
 
-                # driver.close()
+                    # page_source = driver.page_source
 
-                # item_selectors = scrapy_selector.css('.listbase > .grid-list-flex .grid-col-item-wrapper')
+                    scrapy_selector = Selector(text=page_source)
 
-                # for item_selector in item_selectors:
-                #     _item_url = item_selector.css('.grid-col-item > .hg-product > a.product-detail::attr(href)').get()
-                #     item_url = response.urljoin(_item_url)
-                #
-                #     yield scrapy.Request(
-                #         url=item_url, callback=self.parse_items, headers=headers,
-                #         meta={'category': category_name}
-                #     )
+                    driver.close()
 
-                item_url = 'https://www.alibaba.com/product-detail/High-efficiency-tractors-price-120HP-4wd_62520569148.html?spm=a27aq.13891069.2.1.138b5736ERnxoY'
-                yield scrapy.Request(
-                        url=item_url, callback=self.parse_items, headers=headers,
-                        meta={'category': category_name}
-                    )
+                    item_selectors = scrapy_selector.css('.listbase > .grid-list-flex .grid-col-item-wrapper')
+
+                    for item_selector in item_selectors:
+                        _item_url = item_selector.css('.grid-col-item > .hg-product > a.product-detail::attr(href)').get()
+                        item_url = response.urljoin(_item_url)
+
+                        yield scrapy.Request(
+                            url=item_url, callback=self.parse_items, headers=headers,
+                            meta={'category': category_name}
+                        )
+
+                    # item_url = 'https://www.alibaba.com/product-detail/High-efficiency-tractors-price-120HP-4wd_62520569148.html?spm=a27aq.13891069.2.1.138b5736ERnxoY'
+                    # yield scrapy.Request(
+                    #     url=item_url, callback=self.parse_items, headers=headers,
+                    #     meta={'category': category_name}
+                    # )
+
+        else:
+            pass
 
     def parse_items(self, response):
         category = response.meta['category']
@@ -104,33 +124,119 @@ class AlibabaSpider(scrapy.Spider):
         thumb_img_selectors = response.css('.widget-detail-booth-image .thumb img')
         thumb_img_urls = []
         for img_selector in thumb_img_selectors:
-            img_url = img_selector.css('::attr(src)').get()
-            img_url.replace('.jpg_50x50', '')
-            thumb_img_urls.append(img_url)
+            sm_img_url = img_selector.css('::attr(src)').get()
+            if sm_img_url:
+                img_url = sm_img_url.replace('.jpg_50x50', '')
+                thumb_img_urls.append(response.urljoin(img_url))
 
         thumb_video_selectors = response.css('.widget-detail-booth-image video')
         thumb_video_urls = []
         for video_selector in thumb_video_selectors:
             video_url = video_selector.css('::attr(src)').get()
-            thumb_video_urls.append(video_url)
+            if video_url:
+                thumb_video_urls.append(response.urljoin(video_url))
 
-        quick_detail = response.css('.widget-detail-overview .do-entry-separate').get()
+        quick_details = response.css('.widget-detail-overview .do-entry-separate').get()
+        quick_details_entry_selector = response.css(
+            '.widget-detail-overview .do-entry-separate .do-entry-list > dl.do-entry-item')
+
+        place_of_origin = ''
+        for selector in quick_details_entry_selector:
+            k = selector.css('.do-entry-item > .attr-name::text').get()
+            if k == 'Place of Origin:':
+                place_of_origin = selector.css('.do-entry-item-val > .ellipsis::text').get()
+
+        place_of_origin_list = place_of_origin.split(', ')
+        place_of_origin_list_length = len(place_of_origin_list)
+
+        country = None
+        if place_of_origin_list_length > 0:
+            country = place_of_origin_list[place_of_origin_list_length - 1]
 
         detail_img_selectors = response.css('.richtext-detail.rich-text-description img')
         detail_img_urls = []
         for selector in detail_img_selectors:
             img_url = selector.css('::attr(data-src)').get()
             if img_url:
-                detail_img_urls.append(img_url)
+                detail_img_urls.append(response.urljoin(img_url))
+
+        detail_video_urls = []
 
         specification = response.css('.richtext-detail.rich-text-description table').get()
+        description = response.css('.richtext-detail.rich-text-description').get()
 
-        pass
+        img_urls = thumb_img_urls + detail_img_urls
+        video_urls = thumb_video_urls + detail_video_urls
+        doc_urls = []
+
+        separator = ';'
+        img_urls_str = separator.join(img_urls)
+        video_urls_str = separator.join(video_urls)
+        doc_urls_str = separator.join(doc_urls)
+
+        raw_item = {
+            'name': name, 'category': category, 'country': country, 'quick_details': quick_details,
+            'description': description, 'specification': specification, 'img_urls_str': img_urls_str,
+            'video_urls_str': video_urls_str, 'doc_urls_str': doc_urls_str
+        }
+
+        for (k, v) in raw_item.items():
+            if not v:
+                raw_item[k] = ''
+
+        loader = ItemLoader(item=FarmMachineryItem())
+        loader.add_value('name', name)
+        loader.add_value('category', category)
+        loader.add_value('country', country)
+        loader.add_value('quick_details', quick_details)
+        loader.add_value('description', description)
+        loader.add_value('specification', specification)
+        loader.add_value('img_urls', img_urls_str)
+        loader.add_value('video_urls', video_urls_str)
+        loader.add_value('doc_urls', doc_urls_str)
+        loader.add_value('website', 'http://www.alibaba.com')
+
+        item = loader.load_item()
+
+        for url in img_urls:
+            fn = os.path.split(url)[1]
+            if fn in self.existing_img_fns:
+                continue
+
+            try:
+                fn = wget.download(url=url, out=OUTPUT_IMG_DIR)
+                self.logger.info(f'Image Download Success: {fn}')
+            except:
+                self.logger.info(f'Image Download Failed: {fn}')
+
+        for url in video_urls:
+            fn = os.path.split(url)[1]
+            if fn in self.existing_video_fns:
+                continue
+
+            try:
+                fn = wget.download(url=url, out=OUTPUT_VIDEO_DIR)
+                self.logger.info(f'Video Download Success: {fn}')
+            except HTTPError:
+                self.logger.info(f'Video Download Failed: {fn}')
+
+        yield item
+
+    def download_files(self, response):
+        self.logger.info('File Saving Handler !!!')
+        file_name = os.path.split(response.request.url)[1]
+
+        file_save_path = os.path.join(OUTPUT_DIR, file_name)
+
+        with open(file_save_path, 'wb') as f:
+            f.write(response.body)
+            self.logger.info('Saving File %s', file_save_path)
 
     def initialize_chrome_driver(self):
         options = webdriver.ChromeOptions()
         # options.add_argument('--headless')
         # options.add_argument('--no-sandbox')
+        options.add_argument('--start-maximized')
         desired_capabilities = options.to_capabilities()
 
         # driver = webdriver.Chrome(executable_path='/usr/lib/chromium-browser/chromedriver', chrome_options=options)

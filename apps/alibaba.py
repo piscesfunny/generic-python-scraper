@@ -1,14 +1,17 @@
 import os
 
 from scrapy.crawler import CrawlerProcess
-from utils.config import OUTPUT_DIR
+from utils.config import *
+from utils.constants import *
 from farm_machinery.spiders.alibaba import AlibabaSpider
 
 
-def start_scrapper():
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+def start_scrapper(existing_fns, action_type, target_category=None):
+    if action_type == ACTION_GET_CATEGORY:
+        feed_uri = os.path.join(OUTPUT_DIR, 'alibaba_category.json')
+    else:
+        feed_uri = os.path.join(OUTPUT_DIR, 'alibaba.json')
 
-    feed_uri = os.path.join(OUTPUT_DIR, 'alibaba.json')
     if os.path.exists(feed_uri):
         os.remove(feed_uri)
 
@@ -18,7 +21,11 @@ def start_scrapper():
         'FEED_EXPORT_ENCODING': 'utf-8'
     })
 
-    process.crawl(AlibabaSpider, param={})
+    process.crawl(AlibabaSpider, param={
+        'existing_fns': existing_fns,
+        'action_type': action_type,
+        'target_category': target_category,
+    })
 
     process.start()
 

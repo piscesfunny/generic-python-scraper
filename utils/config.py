@@ -10,6 +10,9 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 SCRAPER_API_KEY = os.getenv('SCRAPER_API_KEY')
 
 OUTPUT_DIR = os.path.join(BASE_DIR, 'output')
+OUTPUT_IMG_DIR = os.path.join(OUTPUT_DIR, 'img')
+OUTPUT_VIDEO_DIR = os.path.join(OUTPUT_DIR, 'video')
+OUTPUT_DOC_DIR = os.path.join(OUTPUT_DIR, 'doc')
 
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
 

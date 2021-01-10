@@ -13,6 +13,10 @@ class FarmMachineryItem(Item):
         input_processor=MapCompose(str.strip),
         output_processor=Join()
     )
+    country = Field(
+        input_processor=MapCompose(str.strip),
+        output_processor=Join()
+    )
     quick_details = Field(
         input_processor=MapCompose(str.strip),
         output_processor=Join()
@@ -37,3 +41,7 @@ class FarmMachineryItem(Item):
         input_processor=MapCompose(str.strip),
         output_processor=Join()
     )
+
+    def __repr__(self):
+        """only print out attr1 after exiting the Pipeline"""
+        return repr({"name": self['name'], "category": self['category']})
