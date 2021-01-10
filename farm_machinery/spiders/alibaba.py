@@ -31,10 +31,6 @@ class AlibabaSpider(scrapy.Spider):
         settings = get_project_settings()
         self.default_headers = settings.get('DEFAULT_REQUEST_HEADERS')
 
-        self.existing_img_fns = param['existing_fns']['existing_img_fns']
-        self.existing_video_fns = param['existing_fns']['existing_video_fns']
-        self.existing_doc_fns = param['existing_fns']['existing_doc_fns']
-
         self.action_type = param['action_type']
         self.target_category = param['target_category']
         self.scraping_target = param['scraping_target']

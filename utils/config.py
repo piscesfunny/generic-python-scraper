@@ -14,6 +14,7 @@ OUTPUT_LIST_DIR = os.path.join(OUTPUT_DIR, 'list')
 OUTPUT_RESULT_DIR = os.path.join(OUTPUT_DIR, 'result')
 OUTPUT_MEDIA_URL_LIST_DIR = os.path.join(OUTPUT_DIR, 'media_url_list')
 
+OUTPUT_MEDIA_DIR = os.path.join(OUTPUT_DIR, 'media')
 OUTPUT_IMG_DIR = os.path.join(OUTPUT_DIR, 'img')
 OUTPUT_VIDEO_DIR = os.path.join(OUTPUT_DIR, 'video')
 OUTPUT_DOC_DIR = os.path.join(OUTPUT_DIR, 'doc')
