@@ -34,9 +34,10 @@ if __name__ == '__main__':
             if sys.argv[2] == ACTION_GET_CATEGORY:
                 alibaba_start_scrapper(existing_fns=existing_fns, action_type=sys.argv[2])
             elif sys.argv[2] == ACTION_SCRAPPING:
-                if len(sys.argv) < 4:
-                    logger.info('Category required !!!')
+                if len(sys.argv) < 5:
+                    logger.info('Target Category or Scraping Target  required !!!')
                 else:
                     logger.info(f'{sys.argv[1]}.com spider started')
-                    alibaba_start_scrapper(existing_fns, action_type=sys.argv[2], target_category=sys.argv[3])
-
+                    alibaba_start_scrapper(
+                        existing_fns, action_type=sys.argv[2], target_category=sys.argv[3], scraping_target=sys.argv[4]
+                    )

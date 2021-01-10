@@ -39,6 +39,7 @@ class AlibabaSpider(scrapy.Spider):
 
         self.action_type = param['action_type']
         self.target_category = param['target_category']
+        self.scraping_target = param['scraping_target']
 
     def start_requests(self):
         for url in self.start_urls:
@@ -78,46 +79,46 @@ class AlibabaSpider(scrapy.Spider):
                 yield category
 
         elif self.action_type == ACTION_SCRAPPING:
-            headers = self.default_headers
-            headers['referer'] = response.request.url
+            if self.scraping_target == SCRAPPING_TARGET_LIST:
+                for category in categories:
+                    category_name = category['name']
+                    category_url = category['url']
+                    if category_name == self.target_category:
+                        # category_full_url = f'{category_url}?spm=a27aq.13891069.1148563840.43.31fe5df94lgO5F'
+                        category_full_url = f'{category_url}'
+                        # category_full_url = f"http://api.scraperapi.com?api_key=3fa50cf1d8e5e310542a54b77c6f0e9b&url={category_url}"
 
-            for category in categories:
-                category_name = category['name']
-                category_url = category['url']
-                if category_name == self.target_category:
-                    category_full_url = f'{category_url}?spm=a27aq.13891069.1148563840.43.31fe5df94lgO5F'
+                        driver = self.initialize_chrome_driver()
+                        driver.get(url=category_full_url)
+                        page_source = self.scrollToBottom(driver)
+                        scrapy_selector = Selector(text=page_source)
 
-                    driver = self.initialize_chrome_driver()
-                    driver.get(url=category_full_url)
-                    page_source = self.scrollToBottom(driver)
+                        driver.close()
 
-                    # page_source = driver.page_source
+                        item_selectors = scrapy_selector.css('.listbase > .grid-list-flex .grid-col-item-wrapper')
 
-                    scrapy_selector = Selector(text=page_source)
+                        for item_selector in item_selectors:
+                            item_url = item_selector.css('.grid-col-item > .hg-product > a.product-detail::attr(href)').get()
 
-                    driver.close()
+                            yield {
+                                'item_url': response.urljoin(item_url)
+                            }
 
-                    item_selectors = scrapy_selector.css('.listbase > .grid-list-flex .grid-col-item-wrapper')
+            elif self.scraping_target == SCRAPPING_TARGET_ITEM:
+                headers = self.default_headers
+                headers['referer'] = response.request.url
+                item_url = 'https://www.alibaba.com/product-detail/High-efficiency-tractors-price-120HP-4wd_62520569148.html?spm=a27aq.13891069.2.1.138b5736ERnxoY'
 
-                    for item_selector in item_selectors:
-                        _item_url = item_selector.css('.grid-col-item > .hg-product > a.product-detail::attr(href)').get()
-                        item_url = response.urljoin(_item_url)
-
-                        yield scrapy.Request(
-                            url=item_url, callback=self.parse_items, headers=headers,
-                            meta={'category': category_name}
-                        )
-
-                    # item_url = 'https://www.alibaba.com/product-detail/High-efficiency-tractors-price-120HP-4wd_62520569148.html?spm=a27aq.13891069.2.1.138b5736ERnxoY'
-                    # yield scrapy.Request(
-                    #     url=item_url, callback=self.parse_items, headers=headers,
-                    #     meta={'category': category_name}
-                    # )
-
+                yield scrapy.Request(
+                    url=item_url, callback=self.parse_items, headers=headers,
+                    meta={'category': self.target_category}
+                )
         else:
             pass
 
     def parse_items(self, response):
+        self.logger.info('Parse Items !!!')
+
         category = response.meta['category']
         name = response.css('.ma-title::text').get()
 
@@ -237,10 +238,11 @@ class AlibabaSpider(scrapy.Spider):
         # options.add_argument('--headless')
         # options.add_argument('--no-sandbox')
         options.add_argument('--start-maximized')
-        desired_capabilities = options.to_capabilities()
-
+        # desired_capabilities = options.to_capabilities()
         # driver = webdriver.Chrome(executable_path='/usr/lib/chromium-browser/chromedriver', chrome_options=options)
-        driver = webdriver.Chrome(desired_capabilities=desired_capabilities)
+        # driver = webdriver.Chrome(desired_capabilities=desired_capabilities)
+
+        driver = webdriver.Chrome(executable_path=f'{WEBDRIVER_DIR}/chromedriver', chrome_options=options)
 
         return driver
 

@@ -1,2 +1,4 @@
 ACTION_GET_CATEGORY = 'get_category'
 ACTION_SCRAPPING = 'scraping'
+SCRAPPING_TARGET_LIST = 'list'
+SCRAPPING_TARGET_ITEM = 'item'

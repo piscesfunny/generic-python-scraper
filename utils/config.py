@@ -15,5 +15,6 @@ OUTPUT_VIDEO_DIR = os.path.join(OUTPUT_DIR, 'video')
 OUTPUT_DOC_DIR = os.path.join(OUTPUT_DIR, 'doc')
 
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
+WEBDRIVER_DIR = os.path.join(BASE_DIR, 'webdriver')
 
 PAGE_COUNT_PER_THREAD = os.getenv('PAGE_COUNT_PER_THREAD')
