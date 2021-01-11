@@ -51,7 +51,7 @@ def start_scrapper(action_type, target_category=None, scraping_target=None):
     process.start()
 
 
-def start_downloader(existing_fns, target_category, file_count_per_thread):
+def start_downloader(existing_fns, target_category, file_count_per_thread, action_type):
     site_name = 'alibaba'
 
     media_urls_file_path = os.path.join(OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls.txt')
@@ -63,7 +63,6 @@ def start_downloader(existing_fns, target_category, file_count_per_thread):
     if os.path.exists(failed_file_path):
         os.remove(failed_file_path)
 
-    url_list = []
     filtered_url_list = []
     with open(media_urls_file_path, "r") as f:
         raw_url_list = f.readlines()
@@ -77,50 +76,52 @@ def start_downloader(existing_fns, target_category, file_count_per_thread):
 
         f.close()
 
-    for url in filtered_url_list:
-        fn = os.path.split(url)[1]
-        if fn in existing_fns:
-            continue
-
-        url_list.append(url)
-
-    total_count = len(url_list)
-    # file_count_per_thread = 400
-    file_count_per_thread = int(file_count_per_thread)
-    thread_count = total_count // file_count_per_thread + 1
-
-    print(f'Total Count: {total_count}')
-    print(f'File Count Per Thread: {file_count_per_thread}')
-
-    threads = []
-
-    for x in range(thread_count):
-        start_number_in_thread = x * file_count_per_thread
-        end_number_in_thread = start_number_in_thread + file_count_per_thread
-        if x == thread_count - 1:
-            url_list_per_thread = url_list[start_number_in_thread:]
-        else:
-            url_list_per_thread = url_list[start_number_in_thread:end_number_in_thread]
-        get_partial_images_thread = threading.Thread(target=download_image_by_wget, args=[
-            url_list_per_thread, existing_fns, failed_file_path
-        ])
-
-        get_partial_images_thread.start()
-        threads.append(get_partial_images_thread)
-
-    for thread in threads:
-        thread.join()
-
-    print('Download Finished !!!')
-
     with open(filtered_file_path, "w") as f:
         for url in filtered_url_list:
             f.write(f'{url}\n')
 
         f.close()
 
+    if action_type == ACTION_DOWNLOAD:
+        url_list = []
+        for url in filtered_url_list:
+            fn = os.path.split(url)[1]
+            if fn in existing_fns:
+                continue
 
-def download_image_by_wget(url_list, existing_fns, failed_file_path):
+            url_list.append(url)
+
+        total_count = len(url_list)
+        # file_count_per_thread = 400
+        file_count_per_thread = int(file_count_per_thread)
+        thread_count = total_count // file_count_per_thread + 1
+
+        print(f'Total Count: {total_count}')
+        print(f'File Count Per Thread: {file_count_per_thread}')
+
+        threads = []
+
+        for x in range(thread_count):
+            start_number_in_thread = x * file_count_per_thread
+            end_number_in_thread = start_number_in_thread + file_count_per_thread
+            if x == thread_count - 1:
+                url_list_per_thread = url_list[start_number_in_thread:]
+            else:
+                url_list_per_thread = url_list[start_number_in_thread:end_number_in_thread]
+            get_partial_images_thread = threading.Thread(target=download_image_by_wget, args=[
+                url_list_per_thread, failed_file_path
+            ])
+
+            get_partial_images_thread.start()
+            threads.append(get_partial_images_thread)
+
+        for thread in threads:
+            thread.join()
+
+        print('Download Finished !!!')
+
+
+def download_image_by_wget(url_list, failed_file_path):
     failed_urls = []
     for img_url in url_list:
         try:

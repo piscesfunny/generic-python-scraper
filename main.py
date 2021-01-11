@@ -52,5 +52,11 @@ if __name__ == '__main__':
                     )
             elif sys.argv[2] == ACTION_DOWNLOAD:
                 alibaba_start_downloader(
-                    existing_fns=existing_fns, target_category=sys.argv[3], file_count_per_thread=sys.argv[4]
+                    existing_fns=existing_fns, target_category=sys.argv[3],
+                    file_count_per_thread=sys.argv[4], action_type=ACTION_DOWNLOAD
+                )
+            elif sys.argv[2] == ACTION_FILTER:
+                alibaba_start_downloader(
+                    existing_fns=existing_fns, target_category=sys.argv[3], file_count_per_thread=sys.argv[4],
+                    action_type=ACTION_FILTER
                 )
