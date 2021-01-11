@@ -51,4 +51,6 @@ if __name__ == '__main__':
                         action_type=sys.argv[2], target_category=sys.argv[3], scraping_target=sys.argv[4]
                     )
             elif sys.argv[2] == ACTION_DOWNLOAD:
-                alibaba_start_downloader(existing_fns=existing_fns, target_category=sys.argv[3])
+                alibaba_start_downloader(
+                    existing_fns=existing_fns, target_category=sys.argv[3], file_count_per_thread=sys.argv[4]
+                )

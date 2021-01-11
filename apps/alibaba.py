@@ -51,34 +51,46 @@ def start_scrapper(action_type, target_category=None, scraping_target=None):
     process.start()
 
 
-def start_downloader(existing_fns, target_category):
+def start_downloader(existing_fns, target_category, file_count_per_thread):
     site_name = 'alibaba'
 
-    url_list = []
     media_urls_file_path = os.path.join(OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls.txt')
     filtered_file_path = os.path.join(
         OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls_filtered.txt'
     )
     failed_file_path = os.path.join(OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls_failed.txt')
 
+    if os.path.exists(failed_file_path):
+        os.remove(failed_file_path)
+
+    url_list = []
+    filtered_url_list = []
     with open(media_urls_file_path, "r") as f:
         raw_url_list = f.readlines()
 
-        for url in raw_url_list:
-            filtered_url = url.replace('\n', '')
-            if filtered_url in url_list:
+        for raw_url in raw_url_list:
+            url = raw_url.replace('\n', '')
+            if url in filtered_url_list:
                 continue
 
-            url_list.append(filtered_url)
+            filtered_url_list.append(url)
 
         f.close()
 
+    for url in filtered_url_list:
+        fn = os.path.split(url)[1]
+        if fn in existing_fns:
+            continue
+
+        url_list.append(url)
+
     total_count = len(url_list)
-    file_count_per_thread = 400
+    # file_count_per_thread = 400
+    file_count_per_thread = int(file_count_per_thread)
     thread_count = total_count // file_count_per_thread + 1
 
-    print(f'Total Count: {len(url_list)}')
-    print(f'Count Per Thread: {file_count_per_thread}')
+    print(f'Total Count: {total_count}')
+    print(f'File Count Per Thread: {file_count_per_thread}')
 
     threads = []
 
@@ -102,7 +114,7 @@ def start_downloader(existing_fns, target_category):
     print('Download Finished !!!')
 
     with open(filtered_file_path, "w") as f:
-        for url in url_list:
+        for url in filtered_url_list:
             f.write(f'{url}\n')
 
         f.close()
@@ -111,10 +123,6 @@ def start_downloader(existing_fns, target_category):
 def download_image_by_wget(url_list, existing_fns, failed_file_path):
     failed_urls = []
     for img_url in url_list:
-        fn = os.path.split(img_url)[1]
-        if fn in existing_fns:
-            continue
-
         try:
             image_filename = wget.download(url=img_url, out=OUTPUT_MEDIA_DIR)
         except:
