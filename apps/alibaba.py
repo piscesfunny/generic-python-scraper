@@ -6,10 +6,12 @@ from scrapy.crawler import CrawlerProcess
 from utils.config import *
 from utils.constants import *
 from farm_machinery.spiders.alibaba import AlibabaSpider
+from utils.logging import ScraperLogger
 
 
 def start_scrapper(action_type, target_category=None, scraping_target=None):
     site_name = 'alibaba'
+    logger = ScraperLogger(label='APPS', log_file='alibaba.log').logger
     if action_type == ACTION_GET_CATEGORY:
         feed_format = 'json'
         feed_uri = os.path.join(OUTPUT_DIR, f'{site_name}_categories.{feed_format}')
@@ -22,6 +24,8 @@ def start_scrapper(action_type, target_category=None, scraping_target=None):
             feed_uri = os.path.join(OUTPUT_RESULT_DIR, f'{site_name}_{target_category}_result.{feed_format}')
     else:
         pass
+
+    logger.info(f'feed_uri: {feed_uri}')
 
     list_file_path = os.path.join(OUTPUT_LIST_DIR, f'{site_name}_{target_category}_list.{feed_format}')
     media_urls_file_path = os.path.join(OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls.txt')
