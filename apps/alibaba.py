@@ -65,10 +65,11 @@ def start_downloader(existing_fns, target_category):
         raw_url_list = f.readlines()
 
         for url in raw_url_list:
-            if url in url_list:
+            filtered_url = url.replace('\n', '')
+            if filtered_url in url_list:
                 continue
 
-            url_list.append(url)
+            url_list.append(filtered_url)
 
         f.close()
 

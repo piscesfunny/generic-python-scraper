@@ -133,7 +133,10 @@ class AlibabaSpider(scrapy.Spider):
         for img_selector in thumb_img_selectors:
             sm_img_url = img_selector.css('::attr(src)').get()
             if sm_img_url:
-                img_url = sm_img_url.replace('.jpg_50x50', '')
+                img_url = sm_img_url\
+                    .replace('.jpg_50x50', '')\
+                    .replace('.jpeg_50x50', '')\
+                    .replace('.png_50x50', '')
                 thumb_img_urls.append(response.urljoin(img_url))
 
         thumb_video_selectors = response.css('.widget-detail-booth-image video')
