@@ -65,7 +65,10 @@ class MachinioSpider(scrapy.Spider):
             categories.append(category)
 
         if self.action_type == ACTION_GET_CATEGORY:
-            write_results_to_json(feed_uri=self.feed_uri, item_urls=categories)
+            for category in categories:
+                yield category
+
+            # write_results_to_json(feed_uri=self.feed_uri, item_urls=categories)
 
         elif self.action_type == ACTION_SCRAPPING:
             if self.scraping_target == SCRAPPING_TARGET_LIST:
@@ -94,37 +97,36 @@ class MachinioSpider(scrapy.Spider):
                             if item_url in item_urls:
                                 continue
 
-                            item_urls.append({
+                            item_urls.append(item_url)
+
+                            yield {
                                 'item_url': response.urljoin(item_url)
-                            })
+                            }
 
-                            # yield {
-                            #     'item_url': response.urljoin(item_url)
-                            # }
-
-                        write_results_to_json(feed_uri=self.feed_uri, item_urls=item_urls)
+                        # write_results_to_json(feed_uri=self.feed_uri, item_urls=item_urls)
 
             elif self.scraping_target == SCRAPPING_TARGET_ITEM:
                 headers = self.default_headers
                 headers['referer'] = response.request.url
 
-                url = "https://www.machinio.com/listings/32272671-pot-mixer-nikko-concrete-fertilizer-ngm-2-5-capacity-70-l-200-v-in-tsuruoka-japan"
+                # url = "https://www.machinio.com/listings/32272671-pot-mixer-nikko-concrete-fertilizer-ngm-2-5-capacity-70-l-200-v-in-tsuruoka-japan"
 
-                yield scrapy.Request(
-                    url=url, callback=self.parse_items, headers=headers,
-                    meta={'category': self.target_category}
-                )
-                # with open(self.list_file_path) as f:
-                #     item_urls = json.load(f)
-                #     for item_url_dict in item_urls:
-                #         url = item_url_dict['item_url']
-                #
-                #         yield scrapy.Request(
-                #             url=url, callback=self.parse_items, headers=headers,
-                #             meta={'category': self.target_category}
-                #         )
-                #
-                #         time.sleep(1)
+                # yield scrapy.Request(
+                #     url=url, callback=self.parse_items, headers=headers,
+                #     meta={'category': self.target_category}
+                # )
+
+                with open(self.list_file_path) as f:
+                    item_urls = json.load(f)
+                    for item_url_dict in item_urls:
+                        url = item_url_dict['item_url']
+
+                        yield scrapy.Request(
+                            url=url, callback=self.parse_items, headers=headers,
+                            meta={'category': self.target_category}
+                        )
+
+                        time.sleep(1)
         else:
             pass
 
@@ -188,7 +190,7 @@ class MachinioSpider(scrapy.Spider):
         loader.add_value('video_urls', video_urls_str)
         loader.add_value('doc_urls', doc_urls_str)
         loader.add_value('item_url', request_url)
-        loader.add_value('website', 'http://www.alibaba.com')
+        loader.add_value('website', self.base_url)
 
         item = loader.load_item()
 

@@ -8,6 +8,7 @@ from utils.constants import *
 from apps.alibaba import start_scrapper as alibaba_start_scrapper
 from apps.alibaba import start_downloader as alibaba_start_downloader
 from apps.machinio import start_scrapper as machinio_start_scrapper
+from apps.machinio import start_downloader as machinio_start_downloader
 
 if __name__ == '__main__':
     os.makedirs(LOG_DIR, exist_ok=True)
@@ -71,4 +72,12 @@ if __name__ == '__main__':
                     action_type=sys.argv[2],
                     target_category=sys.argv[3],
                     scraping_target=sys.argv[4]
+                )
+            elif sys.argv[2] == ACTION_FILTER:
+                machinio_start_downloader(
+                    site_name=sys.argv[1],
+                    existing_fns=existing_fns,
+                    target_category=sys.argv[3],
+                    file_count_per_thread=sys.argv[4],
+                    action_type=ACTION_FILTER
                 )

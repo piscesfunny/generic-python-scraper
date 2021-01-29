@@ -54,5 +54,36 @@ def start_scrapper(site_name, action_type, target_category=None, scraping_target
 
     process.start()
 
+
+def start_downloader(site_name, existing_fns, target_category, file_count_per_thread, action_type):
+    media_urls_file_path = os.path.join(OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls.txt')
+    filtered_file_path = os.path.join(
+        OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls_filtered.txt'
+    )
+    failed_file_path = os.path.join(OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls_failed.txt')
+
+    if os.path.exists(failed_file_path):
+        os.remove(failed_file_path)
+
+    filtered_url_list = []
+    with open(media_urls_file_path, "r") as f:
+        raw_url_list = f.readlines()
+
+        for raw_url in raw_url_list:
+            url = raw_url.replace('\n', '')
+            if url in filtered_url_list:
+                continue
+
+            filtered_url_list.append(url)
+
+        f.close()
+
+    with open(filtered_file_path, "w") as f:
+        for url in filtered_url_list:
+            f.write(f'{url}\n')
+
+        f.close()
+
+
 if __name__ == '__main__':
     start_scrapper()
