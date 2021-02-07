@@ -1,14 +1,12 @@
-import os
 import sys
 
-from utils.config import *
-from utils.logging import ScraperLogger
-from utils.constants import *
-
-from apps.alibaba import start_scrapper as alibaba_start_scrapper
 from apps.alibaba import start_downloader as alibaba_start_downloader
-from apps.machinio import start_scrapper as machinio_start_scrapper
+from apps.alibaba import start_scrapper as alibaba_start_scrapper
 from apps.machinio import start_downloader as machinio_start_downloader
+from apps.japan_agritrading import start_scrapper as japan_agritrading_start_scrapper
+from utils.config import *
+from utils.constants import *
+from utils.logging import ScraperLogger
 
 if __name__ == '__main__':
     os.makedirs(LOG_DIR, exist_ok=True)
@@ -18,20 +16,6 @@ if __name__ == '__main__':
     os.makedirs(OUTPUT_MEDIA_URL_LIST_DIR, exist_ok=True)
 
     os.makedirs(OUTPUT_MEDIA_DIR, exist_ok=True)
-
-    # os.makedirs(OUTPUT_IMG_DIR, exist_ok=True)
-    # os.makedirs(OUTPUT_VIDEO_DIR, exist_ok=True)
-    # os.makedirs(OUTPUT_DOC_DIR, exist_ok=True)
-
-    # existing_img_fns = [fn for fn in os.listdir(OUTPUT_IMG_DIR)]
-    # existing_video_fns = [fn for fn in os.listdir(OUTPUT_VIDEO_DIR)]
-    # existing_doc_fns = [fn for fn in os.listdir(OUTPUT_DOC_DIR)]
-    #
-    # existing_fns = {
-    #     'existing_img_fns': existing_img_fns,
-    #     'existing_video_fns': existing_video_fns,
-    #     'existing_doc_fns': existing_doc_fns,
-    # }
 
     existing_fns = [fn for fn in os.listdir(OUTPUT_MEDIA_DIR)]
 
@@ -80,4 +64,15 @@ if __name__ == '__main__':
                     target_category=sys.argv[3],
                     file_count_per_thread=sys.argv[4],
                     action_type=ACTION_FILTER
+                )
+        if sys.argv[1] == 'japan_agritrading':
+            if sys.argv[2] == ACTION_GET_CATEGORY:
+                japan_agritrading_start_scrapper(site_name=sys.argv[1], action_type=sys.argv[2])
+            elif sys.argv[2] == ACTION_SCRAPPING:
+                logger.info(f'{sys.argv[1]}.com spider started')
+                japan_agritrading_start_scrapper(
+                    site_name=sys.argv[1],
+                    action_type=sys.argv[2],
+                    target_category=sys.argv[3],
+                    scraping_target=sys.argv[4]
                 )
