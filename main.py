@@ -9,6 +9,7 @@ from apps.ironplanet import start_scrapper as ironplanet_start_scrapper
 from apps.ironplanet import start_downloader as ironplanet_start_downloader
 from apps.machinerypete import start_scrapper as machinerypete_start_scrapper
 from apps.machinerypete import filter_list as machinerypete_filter_list
+from apps.meganorm import start_scrapper as meganorm_start_scrapper
 from utils.config import *
 from utils.constants import *
 from utils.logging import ScraperLogger
@@ -121,4 +122,15 @@ if __name__ == '__main__':
                 machinerypete_filter_list(
                     site_name=sys.argv[1],
                     target_category=sys.argv[3]
+                )
+        if sys.argv[1] == 'meganorm':
+            if sys.argv[2] == ACTION_GET_CATEGORY:
+                meganorm_start_scrapper(site_name=sys.argv[1], action_type=sys.argv[2])
+            elif sys.argv[2] == ACTION_SCRAPPING:
+                logger.info(f'{sys.argv[1]}.com spider started')
+                meganorm_start_scrapper(
+                    site_name=sys.argv[1],
+                    action_type=sys.argv[2],
+                    target_category=sys.argv[3],
+                    scraping_target=sys.argv[4]
                 )
