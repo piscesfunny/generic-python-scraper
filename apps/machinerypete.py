@@ -1,11 +1,8 @@
-import os
-import threading
-
-import wget
 from scrapy.crawler import CrawlerProcess
+
+from farm_machinery.spiders.machinerypete import MachineryPeteSpider
 from utils.config import *
 from utils.constants import *
-from farm_machinery.spiders.machinio import MachinioSpider
 from utils.logging import ScraperLogger
 
 
@@ -44,7 +41,7 @@ def start_scrapper(site_name, action_type, target_category=None, scraping_target
 
     process = CrawlerProcess(settings=settings)
 
-    process.crawl(MachinioSpider, param={
+    process.crawl(MachineryPeteSpider, param={
         'action_type': action_type,
         'target_category': target_category,
         'scraping_target': scraping_target,
@@ -57,15 +54,11 @@ def start_scrapper(site_name, action_type, target_category=None, scraping_target
     process.start()
 
 
-def start_downloader(site_name, existing_fns, target_category, file_count_per_thread, action_type):
+def filter_list(site_name, target_category):
     media_urls_file_path = os.path.join(OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls.txt')
     filtered_file_path = os.path.join(
         OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls_filtered.txt'
     )
-    failed_file_path = os.path.join(OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls_failed.txt')
-
-    if os.path.exists(failed_file_path):
-        os.remove(failed_file_path)
 
     filtered_url_list = []
     with open(media_urls_file_path, "r") as f:

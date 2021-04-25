@@ -13,39 +13,28 @@ def initialize_chrome_driver():
     options.add_argument('--start-maximized')
     desired_capabilities = options.to_capabilities()
     # driver = webdriver.Chrome(executable_path='/usr/lib/chromium-browser/chromedriver', chrome_options=options)
-    driver = webdriver.Chrome(desired_capabilities=desired_capabilities)
+    # driver = webdriver.Chrome(desired_capabilities=desired_capabilities)
 
-    # driver = webdriver.Chrome(executable_path=f'{WEBDRIVER_DIR}/chromedriver.exe', chrome_options=options)
+    driver = webdriver.Chrome(executable_path=f'{WEBDRIVER_DIR}/chromedriver', chrome_options=options)
 
     return driver
 
 
-def scroll_to_bottom(driver, scroll_pause_time=5):
+def scroll_to_bottom(driver, time_delay=5):
     total_height = 0
     distance = 600
 
     while True:
-        # Get scroll height
         last_height = driver.execute_script("return document.body.scrollHeight")
-        # Scroll down to bottom
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-        # driver.execute_script("window.scrollBy({left: 0, top: 600, behavior: 'smooth'});")
-        # total_height += distance
+        driver.execute_script("window.scrollBy({left: 0, top: 600, behavior: 'smooth'});")
+        total_height += distance
 
-        # Wait to load page
-        time.sleep(scroll_pause_time)
+        time.sleep(time_delay)
 
-        # Calculate new scroll height and compare with last scroll height
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            # If heights are the same it will exit the function
+        if total_height > last_height:
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             break
-        last_height > new_height
-
-        # if total_height > last_height:
-        #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        #     break
 
     return driver.page_source
 

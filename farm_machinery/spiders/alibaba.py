@@ -36,6 +36,7 @@ class AlibabaSpider(scrapy.Spider):
         self.scraping_target = param['scraping_target']
         self.list_file_path = param['list_file_path']
         self.media_urls_file_path = param['media_urls_file_path']
+        self.base_category = param['base_category']
 
     def start_requests(self):
         for url in self.start_urls:
@@ -45,6 +46,9 @@ class AlibabaSpider(scrapy.Spider):
 
     def parse(self, response):
         url = 'https://www.alibaba.com/machinery/agricultural-machinery-equipment/p43_p100010631?spm=a27aq.13891069.scGlobalHomeHeader.381.5e015736OReuU7'
+        if self.base_category == CATEGORY_MINING:
+            url = 'https://www.alibaba.com/machinery/mining-machinery/p43_p100007279?spm=a27aq.industry_category_productlist.0.0.7472407dFMOLLf'
+
         headers = self.default_headers
         headers['referer'] = response.request.url
 
@@ -59,6 +63,8 @@ class AlibabaSpider(scrapy.Spider):
             'Biomass Dryers', 'Egg Incubators', 'Feed Processing Machines', 'Forestry Machinery', 'Milking Machines',
             'Oil Pressers', 'Silos', 'Slaughtering Equipment'
         ]
+        if self.base_category == CATEGORY_MINING:
+            non_target_category_names = []
 
         category_selectors = response.css('.industry-category-tree > .nav')
         for selector in category_selectors:
@@ -90,10 +96,10 @@ class AlibabaSpider(scrapy.Spider):
 
                         driver.close()
 
-                        item_selectors = scrapy_selector.css('.listbase > .grid-list-flex .grid-col-item-wrapper')
+                        item_selectors = scrapy_selector.css('div.flexColFloor.flex5ColFloor')
                         item_urls = []
                         for item_selector in item_selectors:
-                            item_url = item_selector.css('.grid-col-item > .hg-product > a.product-detail::attr(href)').get()
+                            item_url = "https:" + item_selector.css('div.tpl-wrapper > a.dx-event-node::attr(href)').get()
                             if item_url in item_urls:
                                 continue
 
@@ -128,7 +134,7 @@ class AlibabaSpider(scrapy.Spider):
         category = response.meta['category']
         name = response.css('.ma-title::text').get()
 
-        thumb_img_selectors = response.css('.widget-detail-booth-image .thumb img')
+        thumb_img_selectors = response.css('ul.main-image-thumb-ul > li.main-image-thumb-item img')
         thumb_img_urls = []
         for img_selector in thumb_img_selectors:
             sm_img_url = img_selector.css('::attr(src)').get()
@@ -139,7 +145,7 @@ class AlibabaSpider(scrapy.Spider):
                     .replace('.png_50x50', '')
                 thumb_img_urls.append(response.urljoin(img_url))
 
-        thumb_video_selectors = response.css('.widget-detail-booth-image video')
+        thumb_video_selectors = response.css('body video')
         thumb_video_urls = []
         for video_selector in thumb_video_selectors:
             video_url = video_selector.css('::attr(src)').get()
@@ -170,13 +176,11 @@ class AlibabaSpider(scrapy.Spider):
             if img_url:
                 detail_img_urls.append(response.urljoin(img_url))
 
-        detail_video_urls = []
-
         specification = response.css('.richtext-detail.rich-text-description table').get()
         description = response.css('.richtext-detail.rich-text-description').get()
 
         img_urls = thumb_img_urls + detail_img_urls
-        video_urls = thumb_video_urls + detail_video_urls
+        video_urls = thumb_video_urls
         doc_urls = []
 
         separator = ';'
@@ -261,7 +265,7 @@ class AlibabaSpider(scrapy.Spider):
 
         return driver
 
-    def scrollToBottom(self, driver, scroll_pause_time=5):
+    def scrollToBottom(self, driver, scroll_pause_time=3):
         total_height = 0
         distance = 600
 

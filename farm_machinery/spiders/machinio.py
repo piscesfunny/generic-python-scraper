@@ -33,6 +33,7 @@ class MachinioSpider(scrapy.Spider):
         self.action_type = param['action_type']
         self.target_category = param['target_category']
         self.scraping_target = param['scraping_target']
+        self.category_file_path = param['category_file_path']
         self.list_file_path = param['list_file_path']
         self.media_urls_file_path = param['media_urls_file_path']
         self.feed_uri = param['feed_uri']
@@ -44,7 +45,7 @@ class MachinioSpider(scrapy.Spider):
             )
 
     def parse(self, response):
-        category_url = 'https://www.machinio.com/agriculture/'
+        category_url = 'https://www.machinio.com/oil-gas-mining'
         headers = self.default_headers
         headers['referer'] = response.request.url
 
@@ -53,18 +54,18 @@ class MachinioSpider(scrapy.Spider):
         )
 
     def parse_categories(self, response):
-        categories = []
-        category_selectors = response.css('.filters-block')[0].css('li')
-        for selector in category_selectors:
-            name = selector.css('a::text').get()
-            url = selector.css('a::attr(href)').get()
-            url = f'{self.base_url}{url}'
-
-            modified_name = name.replace(' ', '-').replace('&', '-')
-            category = {'name': modified_name, 'url': url}
-            categories.append(category)
-
         if self.action_type == ACTION_GET_CATEGORY:
+            categories = []
+            category_selectors = response.css('.filters-block')[0].css('li')
+            for selector in category_selectors:
+                name = selector.css('a::text').get()
+                url = selector.css('a::attr(href)').get()
+                url = f'{self.base_url}{url}'
+
+                modified_name = name.replace(' ', '-').replace('&', '-')
+                category = {'name': modified_name, 'url': url}
+                categories.append(category)
+
             for category in categories:
                 yield category
 
@@ -72,6 +73,8 @@ class MachinioSpider(scrapy.Spider):
 
         elif self.action_type == ACTION_SCRAPPING:
             if self.scraping_target == SCRAPPING_TARGET_LIST:
+                with open(self.category_file_path) as f:
+                    categories = json.load(f)
                 for category in categories:
                     category_name = category['name']
                     category_url = category['url']
@@ -80,7 +83,7 @@ class MachinioSpider(scrapy.Spider):
 
                         driver = initialize_chrome_driver()
                         driver.get(url=category_full_url)
-                        page_source = scroll_to_bottom(driver, scroll_pause_time=3)
+                        page_source = scroll_to_bottom(driver, time_delay=5)
                         scrapy_selector = Selector(text=page_source)
 
                         driver.close()
@@ -126,7 +129,7 @@ class MachinioSpider(scrapy.Spider):
                             meta={'category': self.target_category}
                         )
 
-                        time.sleep(1)
+                        time.sleep(3)
         else:
             pass
 

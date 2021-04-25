@@ -4,3 +4,5 @@ ACTION_DOWNLOAD = 'download'
 ACTION_FILTER = 'filter'
 SCRAPPING_TARGET_LIST = 'list'
 SCRAPPING_TARGET_ITEM = 'item'
+
+CATEGORY_MINING = 'mining'
