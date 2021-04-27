@@ -26,6 +26,7 @@ def start_scrapper(site_name, action_type, target_category=None, scraping_target
     category_file_path = os.path.join(OUTPUT_DIR, f'{site_name}_categories.json')
     list_file_path = os.path.join(OUTPUT_LIST_DIR, f'{site_name}_{target_category}_list.{feed_format}')
     media_urls_file_path = os.path.join(OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{target_category}_media_urls.txt')
+    error_file_path = os.path.join(OUTPUT_FAILED_DIR, f'{site_name}_{target_category}_error_urls.txt')
 
     if os.path.exists(feed_uri):
         os.remove(feed_uri)
@@ -48,7 +49,8 @@ def start_scrapper(site_name, action_type, target_category=None, scraping_target
         'category_file_path': category_file_path,
         'list_file_path': list_file_path,
         'media_urls_file_path': media_urls_file_path,
-        'feed_uri': feed_uri
+        'feed_uri': feed_uri,
+        'error_file_path': error_file_path
     })
 
     process.start()

@@ -13,6 +13,7 @@ OUTPUT_DIR = os.path.join(BASE_DIR, 'output')
 OUTPUT_LIST_DIR = os.path.join(OUTPUT_DIR, 'list')
 OUTPUT_RESULT_DIR = os.path.join(OUTPUT_DIR, 'result')
 OUTPUT_MEDIA_URL_LIST_DIR = os.path.join(OUTPUT_DIR, 'media_url_list')
+OUTPUT_FAILED_DIR = os.path.join(OUTPUT_DIR, 'failed')
 
 OUTPUT_MEDIA_DIR = os.path.join(OUTPUT_DIR, 'media')
 OUTPUT_IMG_DIR = os.path.join(OUTPUT_DIR, 'img')

@@ -37,6 +37,7 @@ class MeganormSpider(scrapy.Spider):
         self.list_file_path = param['list_file_path']
         self.media_urls_file_path = param['media_urls_file_path']
         self.feed_uri = param['feed_uri']
+        self.error_file_path = param['error_file_path']
 
     def start_requests(self):
         for url in self.start_urls:
@@ -144,7 +145,13 @@ class MeganormSpider(scrapy.Spider):
 
     def get_items(self, request_url, category, headers):
         self.logger.info(f'Parse Items - {request_url}')
-        response = requests.get(url=request_url, headers=headers, timeout=30)
+        try:
+            response = requests.get(url=request_url, headers=headers, timeout=30)
+        except Exception as e:
+            self.logger.info(f'{request_url}: Error - {str(e)}')
+            with open(self.error_file_path, "a") as f:
+                f.write(f'{request_url}\n')
+            return None
         scrapy_selector = Selector(text=response.text)
 
         names = scrapy_selector.css('#ecatbody h3::text').getall()

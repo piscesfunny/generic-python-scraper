@@ -20,6 +20,7 @@ if __name__ == '__main__':
     os.makedirs(OUTPUT_LIST_DIR, exist_ok=True)
     os.makedirs(OUTPUT_RESULT_DIR, exist_ok=True)
     os.makedirs(OUTPUT_MEDIA_URL_LIST_DIR, exist_ok=True)
+    os.makedirs(OUTPUT_FAILED_DIR, exist_ok=True)
 
     os.makedirs(OUTPUT_MEDIA_DIR, exist_ok=True)
 
