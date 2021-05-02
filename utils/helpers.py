@@ -50,3 +50,22 @@ def write_results_to_json(feed_uri, item_urls):
             outfile.write('\n')
         outfile.write(']')
         outfile.close()
+
+
+def convert_txt_to_json(src_f_path, dst_f_path):
+    item_urls = []
+    with open(src_f_path, "r") as f:
+        items = f.readlines()
+
+        for item in items:
+            item = item.replace('\n', '')
+            sub_category = item.split(', ')[0]
+            item_url = item.split(', ')[1]
+
+            item_urls.append({
+                'sub_category': sub_category,
+                'item_url': item_url
+            })
+        f.close()
+
+    write_results_to_json(dst_f_path, item_urls)

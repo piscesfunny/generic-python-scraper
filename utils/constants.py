@@ -2,6 +2,7 @@ ACTION_GET_CATEGORY = 'get_category'
 ACTION_SCRAPPING = 'scraping'
 ACTION_DOWNLOAD = 'download'
 ACTION_FILTER = 'filter'
+ACTION_CONVERT = 'convert'
 SCRAPPING_TARGET_LIST = 'list'
 SCRAPPING_TARGET_ITEM = 'item'
 

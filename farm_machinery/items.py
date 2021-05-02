@@ -13,6 +13,10 @@ class FarmMachineryItem(Item):
         input_processor=MapCompose(str.strip),
         output_processor=Join()
     )
+    sub_category = Field(
+        input_processor=MapCompose(str.strip),
+        output_processor=Join()
+    )
     country = Field(
         input_processor=MapCompose(str.strip),
         output_processor=Join()

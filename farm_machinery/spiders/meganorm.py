@@ -10,13 +10,18 @@ from scrapy.utils.project import get_project_settings
 
 from farm_machinery.items import FarmMachineryItem
 from utils.constants import *
+from utils.helpers import write_results_to_json
 from utils.logging import ScraperLogger
 
 
 class MeganormSpider(scrapy.Spider):
     name = 'meganorm'
     allowed_domains = ['meganorm.ru']
-    start_urls = ['https://meganorm.ru/list0.htm']
+    start_urls = [
+        'https://meganorm.ru/list0.htm',
+        'https://meganorm.ru/list1.htm',
+        'https://meganorm.ru/list2.htm',
+    ]
 
     base_url = 'https://meganorm.ru'
 
@@ -38,12 +43,24 @@ class MeganormSpider(scrapy.Spider):
         self.media_urls_file_path = param['media_urls_file_path']
         self.feed_uri = param['feed_uri']
         self.error_file_path = param['error_file_path']
+        self.failed_items = []
+
+        if self.target_category == 'Строительный_каталог':
+            self.start_url = self.start_urls[1]
+            self.list_prefix = 'list1'
+        elif self.target_category == 'Строительная_база':
+            self.start_url = self.start_urls[2]
+            self.list_prefix = 'list2'
+        else:
+            self.start_url = ''
+            self.list_prefix = 'list'
 
     def start_requests(self):
-        for url in self.start_urls:
-            yield scrapy.Request(
-                url=url, callback=self.parse, headers=self.default_headers
-            )
+        url = self.start_url
+
+        yield scrapy.Request(
+            url=url, callback=self.parse, headers=self.default_headers
+        )
 
     def parse(self, response):
         headers = self.default_headers
@@ -52,16 +69,16 @@ class MeganormSpider(scrapy.Spider):
             categories = []
             category_selectors = response.css('table.doctab3 tr.m2 > td > a')
             for selector in category_selectors:
-                category_name = selector.css('::text').get()
+                sub_category_name = selector.css('::text').get()
                 url = selector.css('::attr(href)').get()
                 full_url = f'{self.base_url}/{url}'
 
-                if category_name:
-                    category_name = category_name.replace(' ', '-').replace('&', '-').replace('/', '-')
+                if sub_category_name:
+                    sub_category_name = sub_category_name.replace(' ', '-').replace('&', '-').replace('/', '-')
                 else:
-                    category_name = ''
+                    sub_category_name = ''
 
-                category = {'name': category_name, 'url': full_url}
+                category = {'name': sub_category_name, 'url': full_url}
                 categories.append(category)
 
             for category in categories:
@@ -72,59 +89,60 @@ class MeganormSpider(scrapy.Spider):
                 with open(self.category_file_path) as f:
                     categories = json.load(f)
                 for category in categories:
-                    category_name = category['name']
+                    sub_category_name = category['name']
                     category_url = category['url']
-                    if category_name == self.target_category:
-                        item_urls = []
-                        current_page_number = 1
 
-                        request_url = category_url
+                    item_urls = []
+
+                    request_url = category_url
+                    res = requests.get(url=request_url, headers=headers)
+                    scrapy_selector = Selector(text=res.text)
+                    _page_count = scrapy_selector.css("#ecatbody .pagebox > a:last-child::text").get()
+                    page_count = int(_page_count) if _page_count else 1
+
+                    f_name = os.path.split(request_url)[1]
+                    prefix = f_name.replace('-0.htm', '')
+
+                    referer_url = response.request.url
+                    current_page_number = 1
+                    while True:
+                        headers['referer'] = referer_url
+                        self.logger.info(f'Request URL - {request_url}')
                         res = requests.get(url=request_url, headers=headers)
                         scrapy_selector = Selector(text=res.text)
-                        _page_count = scrapy_selector.css("#ecatbody .pagebox > a:last-child::text").get()
-                        page_count = int(_page_count) if _page_count else 1
+                        item_selectors = scrapy_selector.css('#ecatbody .doctab1 tr.m3 > td > a:not(.a2)')
 
-                        f_name = os.path.split(request_url)[1]
-                        prefix = f_name.replace('-0.htm', '')
+                        for item_selector in item_selectors:
+                            item_url = item_selector.css('::attr(href)').get()
+                            item_url = item_url.replace('..', '')
 
-                        referer_url = response.request.url
-                        while True:
-                            headers['referer'] = referer_url
-                            self.logger.info(f'Request URL - {request_url}')
-                            res = requests.get(url=request_url, headers=headers)
-                            scrapy_selector = Selector(text=res.text)
-                            item_selectors = scrapy_selector.css('#ecatbody .doctab1 tr.m3 > td > a.a1')
+                            item_url = f'{self.base_url}{item_url}'
 
-                            for item_selector in item_selectors:
-                                item_url = item_selector.css('::attr(href)').get()
-                                item_url = item_url.replace('..', '')
+                            if item_url in item_urls:
+                                self.logger.info(f'List url skipped - {item_url}')
+                                continue
 
-                                item_url = f'{self.base_url}{item_url}'
+                            item_urls.append(item_url)
 
-                                if item_url in item_urls:
-                                    self.logger.info(f'List url skipped - {item_url}')
-                                    continue
+                            yield {
+                                'sub_category': sub_category_name,
+                                'item_url': response.urljoin(item_url)
+                            }
 
-                                item_urls.append(item_url)
+                        current_page_number += 1
 
-                                yield {
-                                    'item_url': response.urljoin(item_url)
-                                }
+                        if current_page_number > page_count:
+                            break
 
-                            current_page_number += 1
+                        page_number_index = current_page_number - 1
 
-                            if current_page_number > page_count:
-                                break
+                        next_page_url = f'{self.list_prefix}/{prefix}-{page_number_index}.htm'
 
-                            page_number_index = current_page_number - 1
+                        referer_url = request_url
 
-                            next_page_url = f'list/{prefix}-{page_number_index}.htm'
+                        request_url = self.base_url + '/' + next_page_url
 
-                            referer_url = request_url
-
-                            request_url = self.base_url + '/' + next_page_url
-
-                            time.sleep(1)
+                        time.sleep(1)
 
             elif self.scraping_target == SCRAPPING_TARGET_ITEM:
                 headers = self.default_headers
@@ -134,23 +152,30 @@ class MeganormSpider(scrapy.Spider):
                     item_urls = json.load(f)
                     for item_url_dict in item_urls:
                         url = item_url_dict['item_url']
-                        item = self.get_items(request_url=url, category=self.target_category, headers=headers)
+                        sub_category = item_url_dict['sub_category']
+                        item = self.get_items(request_url=url, sub_category=sub_category, headers=headers)
 
                         if item:
                             yield item
 
-                        time.sleep(1)
+                    # write_results_to_json(feed_uri=self.error_file_path, item_urls=self.failed_items)
         else:
             pass
 
-    def get_items(self, request_url, category, headers):
+    def get_items(self, request_url, sub_category, headers):
         self.logger.info(f'Parse Items - {request_url}')
         try:
             response = requests.get(url=request_url, headers=headers, timeout=30)
         except Exception as e:
             self.logger.info(f'{request_url}: Error - {str(e)}')
             with open(self.error_file_path, "a") as f:
-                f.write(f'{request_url}\n')
+                f.write(f'{sub_category}, {request_url}\n')
+
+            # self.failed_items.append({
+            #     'sub_category': sub_category,
+            #     'item_url': request_url
+            # })
+
             return None
         scrapy_selector = Selector(text=response.text)
 
@@ -162,13 +187,17 @@ class MeganormSpider(scrapy.Spider):
         description = scrapy_selector.css('table.ecattab1').get()
 
         doc_urls = []
-        doc_selectors = scrapy_selector.css('#ecatbody h2 > a')
+        doc_selectors = scrapy_selector.css('h2 > a')
 
         for doc_selector in doc_selectors:
             _doc_url = doc_selector.css('::attr(href)').get()
 
             if _doc_url:
-                doc_url = self.base_url + _doc_url.replace('../../', '/')
+                if self.target_category == 'Строительная_база':
+                    doc_url = self.base_url + _doc_url.replace('../../../', '/')
+                else:
+                    doc_url = self.base_url + _doc_url.replace('../../', '/')
+
                 if doc_url in doc_urls:
                     continue
 
@@ -187,8 +216,10 @@ class MeganormSpider(scrapy.Spider):
             for url in media_urls:
                 f.write(f'{url}\n')
 
+        category = self.target_category
+
         raw_item = {
-            'name': name, 'category': category, 'country': country, 'quick_details': quick_details,
+            'name': name, 'category': category, 'sub_category': sub_category, 'country': country, 'quick_details': quick_details,
             'description': description, 'specification': specification, 'img_urls_str': img_urls_str,
             'video_urls_str': video_urls_str, 'doc_urls_str': doc_urls_str
         }
@@ -200,6 +231,7 @@ class MeganormSpider(scrapy.Spider):
         loader = ItemLoader(item=FarmMachineryItem())
         loader.add_value('name', name)
         loader.add_value('category', category)
+        loader.add_value('sub_category', sub_category)
         loader.add_value('country', country)
         loader.add_value('quick_details', quick_details)
         loader.add_value('description', description)
