@@ -170,12 +170,6 @@ class SteelCastIronStandardsSpider(scrapy.Spider):
                 url=full_url, callback=self.parse_list, headers=headers
             )
 
-            # full_serial_url = 'http://www.steelnumber.com/en/number_steel_eu.php?number_kod=1.00'
-            # yield scrapy.Request(
-            #     url=full_serial_url, callback=self.parse_list, headers=headers,
-            #     meta={'sub_category': sub_category_name}
-            # )
-
     def parse_list(self, response):
         headers = self.default_headers
         headers['referer'] = response.request.url
@@ -205,7 +199,8 @@ class SteelCastIronStandardsSpider(scrapy.Spider):
         scrapy_selector = response.css('body > center:nth-child(8) > center')
 
         grade = scrapy_selector.css('table > tr:nth-child(1) > td:nth-child(2)::text').get()
-        number = scrapy_selector.css('table > tr:nth-child(2) > td:nth-child(2)::text').get()
+        # number = scrapy_selector.css('table > tr:nth-child(2) > td:nth-child(2)::text').get()
+        number = None
 
         description1 = response.css('body > center:nth-child(6)').get()
         description2 = response.css('body > center:nth-child(8) > center').get()
@@ -226,7 +221,7 @@ class SteelCastIronStandardsSpider(scrapy.Spider):
         loader.add_value('category', category)
         loader.add_value('sub_category', sub_category)
         loader.add_value('grade', grade)
-        loader.add_value('number', number)
+        # loader.add_value('number', number)
         loader.add_value('description', description)
         loader.add_value('item_url', request_url)
         loader.add_value('website', self.base_url)
@@ -274,33 +269,26 @@ class AlloyStandardsSpider(scrapy.Spider):
         headers['referer'] = response.request.url
 
         sub_category_selectors = response.css(
-            'body > center:nth-child(5) > center:nth-child(7) > table:nth-child(1) > tr'
+            'body > center:nth-child(7) > center:nth-child(6) > table:nth-child(1) > tr'
         )
 
         for selector in sub_category_selectors:
-            sub_category_name = selector.css('td:nth-child(2) > b::text').get()
-            serials_selector = selector.css('td:nth-child(3) > table > tr')
-            for serial_selector in serials_selector:
-                serial_url = serial_selector.css('td > a::attr(href)').get()
-                full_serial_url = response.urljoin(serial_url)
+            url = selector.css('td > a::attr(href)').get()
+            full_url = response.urljoin(url)
 
-                yield scrapy.Request(
-                    url=full_serial_url, callback=self.parse_list, headers=headers,
-                    meta={'sub_category': sub_category_name}
-                )
-
-            # full_serial_url = 'http://www.steelnumber.com/en/number_steel_eu.php?number_kod=1.00'
-            # yield scrapy.Request(
-            #     url=full_serial_url, callback=self.parse_list, headers=headers,
-            #     meta={'sub_category': sub_category_name}
-            # )
+            yield scrapy.Request(
+                url=full_url, callback=self.parse_list, headers=headers
+            )
 
     def parse_list(self, response):
         headers = self.default_headers
         headers['referer'] = response.request.url
-        sub_category = response.meta['sub_category']
 
-        selectors = response.css('form table > tr > td')
+        sub_category = response.css(
+            'body > form > center > center:nth-child(4) > table:nth-child(4) > tr > td > b::text'
+        ).get()
+
+        selectors = response.css('body > form > center > center:nth-child(4) > table:nth-child(5) > tr > td')
         for selector in selectors:
             item_url = selector.css('a::attr(href)').get()
 
@@ -318,14 +306,14 @@ class AlloyStandardsSpider(scrapy.Spider):
 
         sub_category = response.meta['sub_category']
 
-        scrapy_selector = response.css('body > center:nth-child(9) > center')
+        scrapy_selector = response.css('body > center:nth-child(7) > center:nth-child(2)')
 
-        _grade = scrapy_selector.css('table > tr:nth-child(1) > td:nth-child(2)::text').get()
-        grade = _grade.strip() if _grade else ''
-        _number = scrapy_selector.css('table > tr:nth-child(2) > td:nth-child(2)::text').get()
-        number = _number.strip() if _number else ''
+        grade = scrapy_selector.css('table > tr:nth-child(1) > td:nth-child(2)::text').get()
+        number = None
 
-        description = response.css('body > center:nth-child(9) > center').get()
+        description1 = response.css('body > center:nth-child(6)').get()
+        description2 = response.css('body > center:nth-child(7) > center:nth-child(2)').get()
+        description = description1 + description2
 
         category = self.target_category
 
@@ -342,7 +330,7 @@ class AlloyStandardsSpider(scrapy.Spider):
         loader.add_value('category', category)
         loader.add_value('sub_category', sub_category)
         loader.add_value('grade', grade)
-        loader.add_value('number', number)
+        # loader.add_value('number', number)
         loader.add_value('description', description)
         loader.add_value('item_url', request_url)
         loader.add_value('website', self.base_url)
