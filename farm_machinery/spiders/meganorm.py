@@ -89,13 +89,19 @@ class MeganormSpider(scrapy.Spider):
                 with open(self.category_file_path) as f:
                     categories = json.load(f)
                 for category in categories:
-                    sub_category_name = category['name']
+                    sub_category = category['name']
                     category_url = category['url']
 
                     item_urls = []
 
                     request_url = category_url
-                    res = requests.get(url=request_url, headers=headers)
+
+                    try:
+                        res = requests.get(url=request_url, headers=headers)
+                    except Exception as e:
+                        with open(self.error_file_path, "a") as f:
+                            f.write(f'{sub_category}, {request_url}\n')
+
                     scrapy_selector = Selector(text=res.text)
                     _page_count = scrapy_selector.css("#ecatbody .pagebox > a:last-child::text").get()
                     page_count = int(_page_count) if _page_count else 1
@@ -108,9 +114,20 @@ class MeganormSpider(scrapy.Spider):
                     while True:
                         headers['referer'] = referer_url
                         self.logger.info(f'Request URL - {request_url}')
-                        res = requests.get(url=request_url, headers=headers)
+                        try:
+                            res = requests.get(url=request_url, headers=headers)
+                        except Exception as e:
+                            with open(self.error_file_path, "a") as f:
+                                f.write(f'{sub_category}, {request_url}\n')
+
                         scrapy_selector = Selector(text=res.text)
-                        item_selectors = scrapy_selector.css('#ecatbody .doctab1 tr.m3 > td > a:not(.a2)')
+
+                        if self.target_category == 'Строительный_каталог':
+                            item_selectors = scrapy_selector.css('#ecatbody .doctab1 tr.m3 > td > a.a2')
+                        elif self.target_category == 'Строительная_база':
+                            item_selectors = scrapy_selector.css('#ecatbody .doctab1 tr.m3 > td > a:not(.a2)')
+                        else:
+                            item_selectors = []
 
                         for item_selector in item_selectors:
                             item_url = item_selector.css('::attr(href)').get()
@@ -125,7 +142,7 @@ class MeganormSpider(scrapy.Spider):
                             item_urls.append(item_url)
 
                             yield {
-                                'sub_category': sub_category_name,
+                                'sub_category': sub_category,
                                 'item_url': response.urljoin(item_url)
                             }
 
@@ -158,7 +175,6 @@ class MeganormSpider(scrapy.Spider):
                         if item:
                             yield item
 
-                    # write_results_to_json(feed_uri=self.error_file_path, item_urls=self.failed_items)
         else:
             pass
 
@@ -171,11 +187,6 @@ class MeganormSpider(scrapy.Spider):
             with open(self.error_file_path, "a") as f:
                 f.write(f'{sub_category}, {request_url}\n')
 
-            # self.failed_items.append({
-            #     'sub_category': sub_category,
-            #     'item_url': request_url
-            # })
-
             return None
         scrapy_selector = Selector(text=response.text)
 
@@ -187,7 +198,13 @@ class MeganormSpider(scrapy.Spider):
         description = scrapy_selector.css('table.ecattab1').get()
 
         doc_urls = []
-        doc_selectors = scrapy_selector.css('h2 > a')
+
+        if self.target_category == 'Строительный_каталог':
+            doc_selectors = scrapy_selector.css('#ecatbody b > a')
+        elif self.target_category == 'Строительная_база':
+            doc_selectors = scrapy_selector.css('h2 > a')
+        else:
+            doc_selectors = []
 
         for doc_selector in doc_selectors:
             _doc_url = doc_selector.css('::attr(href)').get()
