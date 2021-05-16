@@ -64,6 +64,7 @@ class SteelNumberItem(Item):
     sub_category = Field(input_processor=MapCompose(str.strip), output_processor=Join())
     grade = Field(input_processor=MapCompose(str.strip), output_processor=Join())
     number = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    standards = Field(input_processor=MapCompose(str.strip), output_processor=Join())
     description = Field(input_processor=MapCompose(str.strip), output_processor=Join())
     item_url = Field(input_processor=MapCompose(str.strip), output_processor=Join())
     website = Field(input_processor=MapCompose(str.strip), output_processor=Join())
