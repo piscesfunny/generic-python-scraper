@@ -58,12 +58,6 @@ class SteelNumbersSpider(scrapy.Spider):
                     meta={'sub_category': sub_category_name}
                 )
 
-            # full_serial_url = 'http://www.steelnumber.com/en/number_steel_eu.php?number_kod=1.00'
-            # yield scrapy.Request(
-            #     url=full_serial_url, callback=self.parse_list, headers=headers,
-            #     meta={'sub_category': sub_category_name}
-            # )
-
     def parse_list(self, response):
         headers = self.default_headers
         headers['referer'] = response.request.url
@@ -94,7 +88,9 @@ class SteelNumbersSpider(scrapy.Spider):
         _number = scrapy_selector.css('table > tr:nth-child(2) > td:nth-child(2)::text').get()
         number = _number.strip() if _number else ''
 
-        description = response.css('body > center:nth-child(9) > center').get()
+        description1 = response.css('body > center:nth-child(7)').get()
+        description2 = response.css('body > center:nth-child(9) > center').get()
+        description = description1 + description2
 
         category = self.target_category
 
