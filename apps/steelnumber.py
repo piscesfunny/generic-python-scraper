@@ -1,6 +1,8 @@
 from scrapy.crawler import CrawlerProcess
 
 from farm_machinery.spiders.steelnumber import SteelNumbersSpider
+from farm_machinery.spiders.steelnumber import SteelCastIronStandardsSpider
+from farm_machinery.spiders.steelnumber import AlloyStandardsSpider
 from utils.config import *
 from utils.logging import ScraperLogger
 
@@ -26,10 +28,28 @@ def start_scrapper(site_name, target_category=None):
 
     process = CrawlerProcess(settings=settings)
 
-    process.crawl(SteelNumbersSpider, param={
-        'target_category': target_category,
-        'feed_uri': feed_uri,
-        'error_file_path': error_file_path
-    })
+    if target_category == 'Steel_Numbers':
+        process.crawl(SteelNumbersSpider, param={
+            'target_category': target_category,
+            'feed_uri': feed_uri,
+            'error_file_path': error_file_path
+        })
+        process.start()
+    elif target_category == 'Steel_Cast_Iron_Standards':
+        process.crawl(SteelCastIronStandardsSpider, param={
+            'target_category': target_category,
+            'feed_uri': feed_uri,
+            'error_file_path': error_file_path
+        })
 
-    process.start()
+        process.start()
+    elif target_category == 'Alloy_Standards':
+        process.crawl(AlloyStandardsSpider, param={
+            'target_category': target_category,
+            'feed_uri': feed_uri,
+            'error_file_path': error_file_path
+        })
+
+        process.start()
+    else:
+        pass
