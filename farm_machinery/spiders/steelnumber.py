@@ -270,21 +270,36 @@ class AlloyStandardsSpider(scrapy.Spider):
 
         for selector in sub_category_selectors:
             url = selector.css('td > a::attr(href)').get()
+            if not url:
+                continue
+
             full_url = response.urljoin(url)
 
+            sub_category_number = selector.css('td > a > b::text').get()
+            sub_category_description = selector.css('td:nth-child(2)::text').get()
+
+            if sub_category_number and sub_category_description:
+                sub_category_number = sub_category_number.strip().replace('\xa0', ' ')
+                str_list = sub_category_number.split(' ')
+                str_list = list(filter(None, str_list))
+                sub_category_number = ' '.join(str_list)
+
+                sub_category_description = sub_category_description.strip()
+                sub_category = f'{sub_category_number}: {sub_category_description}'
+            else:
+                sub_category = None
+
             yield scrapy.Request(
-                url=full_url, callback=self.parse_list, headers=headers
+                url=full_url, callback=self.parse_list, headers=headers, meta={'sub_category': sub_category}
             )
 
     def parse_list(self, response):
         headers = self.default_headers
         headers['referer'] = response.request.url
 
-        sub_category = response.css(
-            'body > form > center > center:nth-child(4) > table:nth-child(4) > tr > td > b::text'
-        ).get()
+        sub_category = response.meta['sub_category']
 
-        selectors = response.css('body > form > center > center:nth-child(4) > table:nth-child(5) > tr > td')
+        selectors = response.css('body > form > center > center:nth-child(4) > table > tr > td')
         for selector in selectors:
             item_url = selector.css('a::attr(href)').get()
 
