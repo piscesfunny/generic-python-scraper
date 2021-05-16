@@ -11,6 +11,7 @@ from apps.machinerypete import start_scrapper as machinerypete_start_scrapper
 from apps.machinerypete import filter_list as machinerypete_filter_list
 from apps.meganorm import start_scrapper as meganorm_start_scrapper
 from apps.meganorm import get_failed_list_json as meganorm_get_failed_list_json
+from apps.steelnumber import start_scrapper as steelnumber_start_scrapper
 from utils.config import *
 from utils.constants import *
 from utils.logging import ScraperLogger
@@ -138,3 +139,6 @@ if __name__ == '__main__':
                 )
             elif sys.argv[2] == ACTION_CONVERT:
                 meganorm_get_failed_list_json(site_name=sys.argv[1], target_category=sys.argv[3])
+
+        if sys.argv[1] == 'steelnumber':
+            steelnumber_start_scrapper(site_name=sys.argv[1], target_category=sys.argv[2])

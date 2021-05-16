@@ -57,3 +57,17 @@ class FarmMachineryItem(Item):
     def __repr__(self):
         """only print out attr1 after exiting the Pipeline"""
         return repr({"name": self['name'], "category": self['category']})
+
+
+class SteelNumberItem(Item):
+    category = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    sub_category = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    grade = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    number = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    description = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    item_url = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    website = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+
+    def __repr__(self):
+        """only print out attr1 after exiting the Pipeline"""
+        return repr({"grade": self['grade'], "category": self['category']})
