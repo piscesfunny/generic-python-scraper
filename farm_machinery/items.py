@@ -72,3 +72,17 @@ class SteelNumberItem(Item):
     def __repr__(self):
         """only print out attr1 after exiting the Pipeline"""
         return repr({"grade": self['grade'], "category": self['category']})
+
+
+class RefractoryWorldFormItem(Item):
+    department = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    title = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    quick_description = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    description = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    doc_path = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    item_url = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+    website = Field(input_processor=MapCompose(str.strip), output_processor=Join())
+
+    def __repr__(self):
+        """only print out attr1 after exiting the Pipeline"""
+        return repr({"department": self['department'], "title": self['title']})
