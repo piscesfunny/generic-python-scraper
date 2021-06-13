@@ -5,7 +5,7 @@ import wget
 from scrapy.crawler import CrawlerProcess
 from utils.config import *
 from utils.constants import *
-from farm_machinery.spiders.alibaba import AlibabaSpider
+from generic_scraper.spiders.alibaba import AlibabaSpider
 from utils.logging import ScraperLogger
 
 

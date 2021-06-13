@@ -1,6 +1,6 @@
 from scrapy.crawler import CrawlerProcess
 
-from farm_machinery.spiders.refractories_worldforum import RefractoriesWorldForumSpider
+from generic_scraper.spiders.refractories_worldforum import RefractoriesWorldForumSpider
 from utils.config import *
 from utils.logging import ScraperLogger
 

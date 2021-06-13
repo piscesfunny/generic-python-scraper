@@ -1,8 +1,8 @@
 from scrapy.crawler import CrawlerProcess
 
-from farm_machinery.spiders.steelnumber import SteelNumbersSpider
-from farm_machinery.spiders.steelnumber import SteelCastIronStandardsSpider
-from farm_machinery.spiders.steelnumber import AlloyStandardsSpider
+from generic_scraper.spiders.steelnumber import SteelNumbersSpider
+from generic_scraper.spiders.steelnumber import SteelCastIronStandardsSpider
+from generic_scraper.spiders.steelnumber import AlloyStandardsSpider
 from utils.config import *
 from utils.logging import ScraperLogger
 

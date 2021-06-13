@@ -10,7 +10,7 @@ from scrapy.selector import Selector
 from scrapy.utils.project import get_project_settings
 from selenium import webdriver
 
-from farm_machinery.items import FarmMachineryItem
+from generic_scraper.items import FarmMachineryItem
 from utils.config import *
 from utils.constants import *
 from utils.logging import ScraperLogger

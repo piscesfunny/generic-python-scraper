@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
-from farm_machinery.items import FarmMachineryItem
+from generic_scraper.items import FarmMachineryItem
 from utils.config import *
 from utils.constants import *
 from utils.helpers import initialize_chrome_driver, scroll_to_bottom, write_results_to_json

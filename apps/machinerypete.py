@@ -1,6 +1,6 @@
 from scrapy.crawler import CrawlerProcess
 
-from farm_machinery.spiders.machinerypete import MachineryPeteSpider
+from generic_scraper.spiders.machinerypete import MachineryPeteSpider
 from utils.config import *
 from utils.constants import *
 from utils.logging import ScraperLogger
