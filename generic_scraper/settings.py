@@ -1,4 +1,4 @@
-# Scrapy settings for farm_machinery project
+# Scrapy settings for generic_scraper project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -7,10 +7,10 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'farm_machinery'
+BOT_NAME = 'generic_scraper'
 
-SPIDER_MODULES = ['farm_machinery.spiders']
-NEWSPIDER_MODULE = 'farm_machinery.spiders'
+SPIDER_MODULES = ['generic_scraper.spiders']
+NEWSPIDER_MODULE = 'generic_scraper.spiders'
 
 DEFAULT_REQUEST_HEADERS = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -24,7 +24,7 @@ DEFAULT_REQUEST_HEADERS = {
 }
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'farm_machinery (+http://www.yourdomain.com)'
+#USER_AGENT = 'generic_scraper (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -55,13 +55,13 @@ ROBOTSTXT_OBEY = True
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    'farm_machinery.middlewares.FarmMachinerySpiderMiddleware': 543,
+#    'generic_scraper.middlewares.FarmMachinerySpiderMiddleware': 543,
 #}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    'farm_machinery.middlewares.FarmMachineryDownloaderMiddleware': 543,
+#    'generic_scraper.middlewares.FarmMachineryDownloaderMiddleware': 543,
 #}
 
 # Enable or disable extensions
@@ -73,7 +73,7 @@ ROBOTSTXT_OBEY = True
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 #ITEM_PIPELINES = {
-#    'farm_machinery.pipelines.FarmMachineryPipeline': 300,
+#    'generic_scraper.pipelines.FarmMachineryPipeline': 300,
 #}
 
 # Enable and configure the AutoThrottle extension (disabled by default)

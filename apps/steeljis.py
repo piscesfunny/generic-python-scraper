@@ -1,6 +1,6 @@
 from scrapy.crawler import CrawlerProcess
 
-from farm_machinery.spiders.steeljis import SteelGradingSpider
+from generic_scraper.spiders.steeljis import SteelGradingSpider
 from utils.config import *
 from utils.logging import ScraperLogger
 

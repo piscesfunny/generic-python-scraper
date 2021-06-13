@@ -1,6 +1,6 @@
 from scrapy.crawler import CrawlerProcess
 
-from farm_machinery.spiders.japan_agritrading import JapanAgriTradingSpider
+from generic_scraper.spiders.japan_agritrading import JapanAgriTradingSpider
 from utils.config import *
 from utils.constants import *
 from utils.logging import ScraperLogger

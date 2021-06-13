@@ -5,7 +5,7 @@ import wget
 from scrapy.crawler import CrawlerProcess
 from utils.config import *
 from utils.constants import *
-from farm_machinery.spiders.machinio import MachinioSpider
+from generic_scraper.spiders.machinio import MachinioSpider
 from utils.logging import ScraperLogger
 
 

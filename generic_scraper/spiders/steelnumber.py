@@ -1,7 +1,7 @@
 import scrapy
 from scrapy.loader import ItemLoader
 
-from farm_machinery.items import SteelNumberItem
+from generic_scraper.items import SteelNumberItem
 from utils.logging import ScraperLogger
 
 

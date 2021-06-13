@@ -1,6 +1,6 @@
 from scrapy.crawler import CrawlerProcess
 
-from farm_machinery.spiders.meganorm import MeganormSpider
+from generic_scraper.spiders.meganorm import MeganormSpider
 from utils.config import *
 from utils.constants import *
 from utils.helpers import convert_txt_to_json
