@@ -1,10 +1,7 @@
 import json
-import os
 import time
-import scrapy
-import wget
-import csv
 
+import scrapy
 from scrapy.loader import ItemLoader
 from scrapy.selector import Selector
 from scrapy.utils.project import get_project_settings

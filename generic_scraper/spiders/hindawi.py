@@ -2,12 +2,9 @@ import os.path
 import time
 
 import scrapy
-from scrapy.loader import ItemLoader
-from scrapy.utils.project import get_project_settings
-from selenium.common.exceptions import NoSuchElementException
 from scrapy.selector import Selector
+from scrapy.utils.project import get_project_settings
 
-from generic_scraper.items import RefractoryWorldFormItem
 from utils.config import OUTPUT_MEDIA_URL_LIST_DIR
 from utils.helpers import initialize_chrome_driver, write_results_to_txt
 from utils.logging import ScraperLogger
