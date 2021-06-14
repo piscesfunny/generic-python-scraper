@@ -3,20 +3,14 @@ import time
 
 import requests
 import scrapy
+from scraper_api import ScraperAPIClient
 from scrapy.loader import ItemLoader
 from scrapy.selector import Selector
 from scrapy.utils.project import get_project_settings
-from scraper_api import ScraperAPIClient
-
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
 
 from generic_scraper.items import FarmMachineryItem
 from utils.config import *
 from utils.constants import *
-from utils.helpers import initialize_chrome_driver, scroll_to_bottom, write_results_to_json
 from utils.logging import ScraperLogger
 
 

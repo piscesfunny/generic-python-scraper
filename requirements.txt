@@ -4,3 +4,4 @@ itemadapter~=0.2.0
 selenium~=3.141.0
 wget~=3.2
 requests~=2.25.1
+scraperapi-sdk==0.2.2

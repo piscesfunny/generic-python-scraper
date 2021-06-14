@@ -9,7 +9,7 @@ from scrapy.utils.project import get_project_settings
 from generic_scraper.items import FarmMachineryItem
 from utils.config import *
 from utils.constants import *
-from utils.helpers import initialize_chrome_driver, scroll_to_bottom, write_results_to_json
+from utils.helpers import initialize_chrome_driver, scroll_to_bottom
 from utils.logging import ScraperLogger
 
 

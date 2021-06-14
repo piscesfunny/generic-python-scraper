@@ -1,7 +1,7 @@
 import scrapy
 from scrapy.loader import ItemLoader
 
-from generic_scraper.items import SteelNumberItem, RefractoryWorldFormItem
+from generic_scraper.items import RefractoryWorldFormItem
 from utils.logging import ScraperLogger
 
 
