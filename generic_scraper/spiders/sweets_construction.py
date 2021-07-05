@@ -59,6 +59,9 @@ class SweetsConstructionSpider(scrapy.Spider):
 
     def get_items(self, request_url, category, driver):
         self.logger.info(f'Parse Items - {request_url}')
+        feed_uri = os.path.join(OUTPUT_RESULT_DIR, f'{category}.json')
+        if os.path.exists(feed_uri):
+            os.remove(feed_uri)
 
         driver.get(url=request_url)
         try:
@@ -75,9 +78,6 @@ class SweetsConstructionSpider(scrapy.Spider):
         except NoSuchElementException as exception:
             self.logger.info(f"Exception - {exception}")
 
-        feed_uri = os.path.join(OUTPUT_RESULT_DIR, f'{category}.json')
-        if os.path.exists(feed_uri):
-            os.remove(feed_uri)
         total_items = []
         while True:
             items = []
