@@ -90,16 +90,23 @@ class SweetsConstructionSpider(scrapy.Spider):
                 manufacturer = search_category = master_format = ''
                 for idx, brand_block_selector in enumerate(brand_block_selectors):
                     if idx == 0:
-                        manufacturer = brand_block_selector.get()
+                        manufacturer = driver.find_element_by_xpath(
+                            '//*[@id="ctl00_cphMain_divResults"]/div[1]/div[2]/div/div/p[1]'
+                        ).text.replace('Manufacturer:', '')
                     elif idx == 1:
-                        search_category = brand_block_selector.get()
+                        search_category = driver.find_element_by_xpath(
+                            '//*[@id="ctl00_cphMain_divResults"]/div[1]/div[2]/div/div/p[2]')\
+                            .text.replace('Category:', '')
                     else:
-                        master_format = brand_block_selector.get()
-                img_url = selector.css('.col-md-2 > a > img::attr(src)').get()
+                        master_format = driver.find_element_by_xpath(
+                            '//*[@id="ctl00_cphMain_divResults"]/div[1]/div[2]/div/div/p[3]'
+                        ).text.replace('MasterFormat:', '')
+                _img_url = selector.css('.col-md-2 > a > img::attr(src)').get()
+                img_url = _img_url.replace('/150_150/', '/300_300/')
 
                 raw_item = {
                     'category': category, 'name': name, 'description': description, 'search_category': search_category,
-                    'manufacturer': manufacturer, 'master_format': master_format, 'img_ur': img_url,
+                    'manufacturer': manufacturer, 'master_format': master_format, 'img_url': img_url,
                     'item_url': item_url
                 }
 
