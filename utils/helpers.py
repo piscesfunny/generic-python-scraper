@@ -40,16 +40,16 @@ def scroll_to_bottom(driver, time_delay=5):
     return driver.page_source
 
 
-def write_results_to_json(feed_uri, item_urls):
-    with open(feed_uri, 'w', encoding='utf-8') as outfile:
-        outfile.write('[\n')
-        item_count = len(item_urls)
-        for index, item in enumerate(item_urls):
+def write_results_to_json(feed_uri, items, write_mode='w'):
+    with open(feed_uri, write_mode, encoding='utf-8') as outfile:
+        # outfile.write('[\n')
+        item_count = len(items)
+        for index, item in enumerate(items):
             json.dump(item, outfile, ensure_ascii=False)
             if index < item_count - 1:
                 outfile.write(',')
             outfile.write('\n')
-        outfile.write(']')
+        # outfile.write(']')
         outfile.close()
 
 
