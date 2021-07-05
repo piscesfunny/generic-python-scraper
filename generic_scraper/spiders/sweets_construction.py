@@ -76,6 +76,8 @@ class SweetsConstructionSpider(scrapy.Spider):
             self.logger.info(f"Exception - {exception}")
 
         feed_uri = os.path.join(OUTPUT_RESULT_DIR, f'{category}.json')
+        if os.path.exists(feed_uri):
+            os.remove(feed_uri)
         total_items = []
         while True:
             items = []
