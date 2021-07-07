@@ -160,4 +160,4 @@ if __name__ == '__main__':
         hindawi_start_scrapper(site_name=sys.argv[1])
 
     if sys.argv[1] == 'sweets_construction':
-        sweets_construction_start_scrapper(site_name=sys.argv[1])
+        sweets_construction_start_scrapper(site_name=sys.argv[1], scraping_target=sys.argv[2])

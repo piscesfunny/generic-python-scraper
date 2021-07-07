@@ -5,7 +5,7 @@ from utils.config import *
 from utils.logging import ScraperLogger
 
 
-def start_scrapper(site_name, action_type=None, target_category=None, scraping_target=None):
+def start_scrapper(site_name, scraping_target=None):
     logger = ScraperLogger(label='APPS', log_file=f'{site_name}.log').logger
 
     feed_format = 'json'
@@ -32,6 +32,7 @@ def start_scrapper(site_name, action_type=None, target_category=None, scraping_t
     process = CrawlerProcess(settings=settings)
 
     process.crawl(SweetsConstructionSpider, param={
+        'scraping_target': scraping_target,
         'category_file_path': category_file_path,
         'list_file_path': list_file_path,
         'media_urls_file_path': media_urls_file_path,
