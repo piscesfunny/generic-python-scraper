@@ -40,7 +40,7 @@ if __name__ == '__main__':
     ]
 
     if sys.argv[1] in sites_with_three_parameter:
-        validate_parameter(parameter_count=3)
+        validate_parameter(sys.argv, parameter_count=3)
 
     if sys.argv[1] == 'alibaba':
         if sys.argv[2] == ACTION_GET_CATEGORY:

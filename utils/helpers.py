@@ -16,19 +16,19 @@ def initialize_chrome_driver():
     # driver = webdriver.Chrome(executable_path='/usr/lib/chromium-browser/chromedriver', chrome_options=options)
     # driver = webdriver.Chrome(desired_capabilities=desired_capabilities)
 
-    driver = webdriver.Chrome(executable_path=f'{WEBDRIVER_DIR}/chromedriver.exe', chrome_options=options)
+    driver = webdriver.Chrome(executable_path=f'{WEBDRIVER_DIR}/chromedriver', chrome_options=options)
 
     return driver
 
 
 def scroll_to_bottom(driver, time_delay=5):
     total_height = 0
-    distance = 600
+    distance = 700
 
     while True:
         last_height = driver.execute_script("return document.body.scrollHeight")
 
-        driver.execute_script("window.scrollBy({left: 0, top: 600, behavior: 'smooth'});")
+        driver.execute_script("window.scrollBy({left: 0, top: 700, behavior: 'smooth'});")
         total_height += distance
 
         time.sleep(time_delay)
