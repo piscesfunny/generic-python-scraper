@@ -4,12 +4,10 @@ import time
 
 import requests
 import scrapy
-from itemloaders import ItemLoader
 from scrapy.selector import Selector
 from scrapy.utils.project import get_project_settings
 from selenium.common.exceptions import NoSuchElementException
 
-from generic_scraper.items import SweetsConstructionItem
 from utils.config import OUTPUT_RESULT_DIR
 from utils.constants import SCRAPPING_TARGET_ITEM
 from utils.helpers import initialize_chrome_driver, write_results_to_json
