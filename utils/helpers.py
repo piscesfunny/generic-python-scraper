@@ -1,22 +1,23 @@
 import json
 import time
+import chromedriver_binary
 
 from selenium import webdriver
 
-from utils.config import WEBDRIVER_DIR
+# from utils.config import WEBDRIVER_DIR
 from utils.logging import ScraperLogger
 
 
 def initialize_chrome_driver():
     options = webdriver.ChromeOptions()
-    # options.add_argument('--headless')
+    options.add_argument('--headless')
     # options.add_argument('--no-sandbox')
     options.add_argument('--start-maximized')
     desired_capabilities = options.to_capabilities()
     # driver = webdriver.Chrome(executable_path='/usr/lib/chromium-browser/chromedriver', chrome_options=options)
     # driver = webdriver.Chrome(desired_capabilities=desired_capabilities)
 
-    driver = webdriver.Chrome(executable_path=f'{WEBDRIVER_DIR}/chromedriver.exe', chrome_options=options)
+    driver = webdriver.Chrome(chrome_options=options)
 
     return driver
 
