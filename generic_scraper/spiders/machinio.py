@@ -171,7 +171,7 @@ class MachinioSpider(scrapy.Spider):
     def parse_items(self, response):
         request_url = response.request.url
         # self.logger.info(f'Parse Items - {request_url}')
-        print().info(f'Parse Items - {request_url}')
+        print(f'Parse Items - {request_url}')
 
         category = response.meta['category']
         name = response.css('h1::text').get()
