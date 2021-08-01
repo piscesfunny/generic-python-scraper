@@ -1,7 +1,7 @@
 from scrapy.crawler import CrawlerProcess
 from utils.config import *
 from generic_scraper.spiders.machinio import MachinioSpider
-# from utils.logging import ScraperLogger
+from settings import CATEGORY_URL, SUB_CATEGORY, SUB_CATEGORY_URL
 
 os.makedirs(OUTPUT_RESULT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_MEDIA_URL_LIST_DIR, exist_ok=True)
@@ -48,5 +48,4 @@ def start_scrapper(category_url, sub_category_url, sub_category, site_name="mach
 
 
 if __name__ == '__main__':
-    start_scrapper(category_url="https://www.machinio.com/processing", sub_category="Industrial Compressors",
-                   sub_category_url="https://www.machinio.com/industrial-compressors#results")
+    start_scrapper(category_url=CATEGORY_URL, sub_category=SUB_CATEGORY, sub_category_url=SUB_CATEGORY_URL)

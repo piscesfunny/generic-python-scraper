@@ -9,9 +9,7 @@ from scrapy.utils.project import get_project_settings
 
 from generic_scraper.items import FarmMachineryItem
 from utils.config import *
-# from utils.constants import *
 from utils.helpers import initialize_chrome_driver, scroll_to_bottom
-# from utils.logging import ScraperLogger
 
 
 class MachinioSpider(scrapy.Spider):
@@ -26,18 +24,13 @@ class MachinioSpider(scrapy.Spider):
     def __init__(self, param):
         super(MachinioSpider, self).__init__()
 
-        # self.logger = ScraperLogger(label='SPIDER', log_file='machinio.log').logger
 
         settings = get_project_settings()
         self.default_headers = settings.get('DEFAULT_REQUEST_HEADERS')
 
-        # self.action_type = param['action_type']
         self.category_url = param['category_url']
         self.sub_category = param['sub_category']
         self.sub_category_url = param['sub_category_url']
-        # self.scraping_target = param['scraping_target']
-        # self.category_file_path = param['category_file_path']
-        # self.list_file_path = param['list_file_path']
         self.media_urls_file_path = param['media_urls_file_path']
         self.processed_urls_file_path = param['processed_url_path']
         self.item_url_file_path = param['item_url_file_path']
@@ -59,31 +52,6 @@ class MachinioSpider(scrapy.Spider):
         )
 
     def parse_categories(self, response):
-        # if self.action_type == ACTION_GET_CATEGORY:
-        #     categories = []
-        #     category_selectors = response.css('.filters-block')[0].css('li')
-        #     for selector in category_selectors:
-        #         name = selector.css('a::text').get()
-        #         url = selector.css('a::attr(href)').get()
-        #         url = f'{self.base_url}{url}'
-        #
-        #         modified_name = name.replace(' ', '-').replace('&', '-')
-        #         category = {'name': modified_name, 'url': url}
-        #         categories.append(category)
-        #
-        #     for category in categories:
-        #         yield category
-        #
-        #     # write_results_to_json(feed_uri=self.feed_uri, item_urls=categories)
-
-        # elif self.action_type == ACTION_SCRAPPING:
-        #     if self.scraping_target == SCRAPPING_TARGET_LIST:
-        #         with open(self.category_file_path) as f:
-        #             categories = json.load(f)
-        #         for category in categories:
-        #             category_name = category['name']
-        #             category_url = category['url']
-        #             if category_name == self.target_category:
         headers = self.default_headers
         headers['referer'] = response.request.url
         if not os.path.exists(self.item_url_file_path):
@@ -100,7 +68,7 @@ class MachinioSpider(scrapy.Spider):
 
             driver = initialize_chrome_driver()
             driver.get(url=category_full_url)
-            page_source = scroll_to_bottom(driver, time_delay=0.5)
+            page_source = scroll_to_bottom(driver, time_delay=1)
             scrapy_selector = Selector(text=page_source)
 
             driver.close()
@@ -110,12 +78,12 @@ class MachinioSpider(scrapy.Spider):
             )
             for item_selector in item_selectors:
                 item_url = item_selector.css(
-                    '.offer-listing__image-wrapper > a::attr(href)'
+                    'a.c-listing-card__image-column::attr(href)'
                 ).get()
-                item_urls.append(item_url)
+                item_urls.append([self.base_url + item_url])
                 with open(self.item_url_file_path, 'a') as csv_file_:
                     file_writer = csv.writer(csv_file_, delimiter=',')
-                    file_writer.writerow([item_url])
+                    file_writer.writerow([self.base_url + item_url])
 
         print("Items Scrapping...")
         # item_urls = []
@@ -128,45 +96,16 @@ class MachinioSpider(scrapy.Spider):
                 reader = csv.reader(f)
                 processed_urls = list(reader)
         for item_url in item_urls:
-            if item_url == "":
+            if item_url[0] == "":
                 continue
             if item_url in processed_urls:
                 continue
             yield scrapy.Request(
-                url=item_url, callback=self.parse_items, headers=headers,
+                url=item_url[0], callback=self.parse_items, headers=headers,
                 meta={'category': self.sub_category}
             )
 
-            time.sleep(3)
-
-            # if item_url in item_urls:
-            #     continue
-
-            # item_urls.append(item_url)
-            #
-            # yield {
-            #     'item_url': response.urljoin(item_url)
-            # }
-
-            # write_results_to_json(feed_uri=self.feed_uri, item_urls=item_urls)
-
-            # elif self.scraping_target == SCRAPPING_TARGET_ITEM:
-
-        # url = "https://www.machinio.com/listings/32272671-pot-mixer-nikko-concrete-fertilizer-ngm-2-5-capacity-70-l
-        # -200-v-in-tsuruoka-japan"
-
-        # yield scrapy.Request(
-        #     url=url, callback=self.parse_items, headers=headers,
-        #     meta={'category': self.target_category}
-        # )
-
-        # with open(self.list_file_path) as f:
-        #     item_urls = json.load(f)
-        #     for item_url_dict in item_urls:
-        #         url = item_url_dict['item_url']
-
-        # else:
-        #     pass
+            time.sleep(1)
 
     def parse_items(self, response):
         request_url = response.request.url
@@ -176,6 +115,7 @@ class MachinioSpider(scrapy.Spider):
         category = response.meta['category']
         name = response.css('h1::text').get()
         country = response.css('.listing-details .listing-info .spec > dd::text').get()
+        price = response.css('.listing-details .listing-info .price::text').get()
         quick_details = ''
         specification = response.css('.specifications-box .specification-list > div').get()
         description = response.css('.description-box .description').get()
@@ -209,7 +149,7 @@ class MachinioSpider(scrapy.Spider):
                 f.write(f'{url}\n')
 
         raw_item = {
-            'name': name, 'category': category, 'country': country, 'quick_details': quick_details,
+            'name': name, 'category': category, 'country': country, 'price': price, 'quick_details': quick_details,
             'description': description, 'specification': specification, 'img_urls_str': img_urls_str,
             'video_urls_str': video_urls_str, 'doc_urls_str': doc_urls_str
         }
@@ -222,6 +162,7 @@ class MachinioSpider(scrapy.Spider):
         loader.add_value('name', name)
         loader.add_value('category', category)
         loader.add_value('country', country)
+        loader.add_value('price', price)
         loader.add_value('quick_details', quick_details)
         loader.add_value('description', description)
         loader.add_value('specification', specification)
