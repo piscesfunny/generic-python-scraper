@@ -9,7 +9,10 @@ from generic_scraper.spiders.alibaba import AlibabaSpider
 from utils.logging import ScraperLogger
 
 
-def start_scrapper(site_name, action_type, target_category=None, scraping_target=None, base_category='farm'):
+def start_scrapper(
+    site_name, action_type, target_category=None, scraping_target=None, base_category='farm',
+    specific_category_url='', total_page_count=1, start_page_number=1
+):
     logger = ScraperLogger(label='APPS', log_file='alibaba.log').logger
     if action_type == ACTION_GET_CATEGORY:
         feed_format = 'json'
@@ -50,6 +53,9 @@ def start_scrapper(site_name, action_type, target_category=None, scraping_target
         'list_file_path': list_file_path,
         'media_urls_file_path': media_urls_file_path,
         'base_category': base_category,
+        'specific_category_url': specific_category_url,
+        'total_page_count': total_page_count,
+        'start_page_number': start_page_number
     })
 
     process.start()
