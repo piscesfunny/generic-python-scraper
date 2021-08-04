@@ -6,11 +6,10 @@ import scrapy
 from scrapy.loader import ItemLoader
 from scrapy.selector import Selector
 from scrapy.utils.project import get_project_settings
-from selenium import webdriver
 
 from generic_scraper.items import FarmMachineryItem
-from utils.config import *
 from utils.constants import *
+from utils.helpers import initialize_chrome_driver, scroll_to_bottom
 from utils.logging import ScraperLogger
 
 
@@ -55,7 +54,17 @@ class AlibabaSpider(scrapy.Spider):
                     url=self.specific_category_url, callback=self.parse_list_one, headers=headers
                 )
             elif self.scraping_target == SCRAPPING_TARGET_ITEM:
-                pass
+                driver = initialize_chrome_driver()
+                with open(self.list_file_path) as f:
+                    item_urls = json.load(f)
+                    for item_url_dict in item_urls:
+                        url = item_url_dict['item_url']
+                        item = self.get_item_detail_one(
+                            request_url=url, category=self.target_category, driver=driver, scrapy_response=response
+                        )
+                        yield item
+                        time.sleep(1)
+                driver.close()
             else:
                 pass
         else:
@@ -277,5 +286,99 @@ class AlibabaSpider(scrapy.Spider):
                 self.logger.info(f'Error page number: {page_number}')
                 break
 
-    def get_items_one(self, request_url, category, driver):
-        pass
+    def get_item_detail_one(self, request_url, category, driver, scrapy_response):
+        self.logger.info(f'Parse Items - {request_url}')
+        driver.get(url=request_url)
+        page_source = scroll_to_bottom(driver)
+
+        selector = Selector(text=page_source)
+
+        name = selector.css('h1::text').get()
+        price = selector.css('.ma-price-wrap').get()
+        quick_details = selector.css('.widget-detail-overview .do-entry-separate').get()
+        quick_details_entry_selectors = selector.css(
+            '.widget-detail-overview .do-entry-separate .do-entry-list > dl.do-entry-item')
+
+        place_of_origin = ''
+        for quick_details_entry_selector in quick_details_entry_selectors:
+            k = quick_details_entry_selector.css('.do-entry-item > .attr-name::text').get()
+            if k == 'Place of Origin:':
+                _place_of_origin = selector.css('.do-entry-item-val > .text-ellipsis::text').get()
+                place_of_origin = _place_of_origin if _place_of_origin else ''
+
+        place_of_origin_list = place_of_origin.split(',')
+        place_of_origin_list_length = len(place_of_origin_list)
+
+        country = None
+        if place_of_origin_list_length > 0:
+            country = place_of_origin_list[place_of_origin_list_length - 1]
+
+        specification = selector.css('.richtext-detail.rich-text-description table').get()
+        description = selector.css('.richtext-detail.rich-text-description').get()
+
+        thumb_img_selectors = selector.css('ul.main-image-thumb-ul > li.main-image-thumb-item img')
+        thumb_img_urls = []
+        for img_selector in thumb_img_selectors:
+            sm_img_url = img_selector.css('::attr(src)').get()
+            if sm_img_url:
+                img_url = sm_img_url \
+                    .replace('.jpg_50x50', '') \
+                    .replace('.jpeg_50x50', '') \
+                    .replace('.png_50x50', '')
+                thumb_img_urls.append(scrapy_response.urljoin(img_url))
+
+        thumb_video_selectors = selector.css('body video')
+        thumb_video_urls = []
+        for video_selector in thumb_video_selectors:
+            video_url = video_selector.css('::attr(src)').get()
+            if video_url:
+                thumb_video_urls.append(scrapy_response.urljoin(video_url))
+
+        detail_img_selectors = selector.css('.richtext-detail.rich-text-description img')
+        detail_img_urls = []
+        for selector in detail_img_selectors:
+            img_url = selector.css('::attr(data-src)').get()
+            if img_url:
+                detail_img_urls.append(scrapy_response.urljoin(img_url))
+
+        img_urls = thumb_img_urls + detail_img_urls
+        video_urls = thumb_video_urls
+        doc_urls = []
+
+        media_urls = img_urls + video_urls + doc_urls
+        with open(self.media_urls_file_path, "a") as f:
+            for url in media_urls:
+                f.write(f'{url}\n')
+
+        separator = ';'
+        img_urls_str = separator.join(img_urls)
+        video_urls_str = separator.join(video_urls)
+        doc_urls_str = separator.join(doc_urls)
+
+        raw_item = {
+            'name': name, 'category': category, 'country': country, 'price': price, 'quick_details': quick_details,
+            'description': description, 'specification': specification, 'img_urls_str': img_urls_str,
+            'video_urls_str': video_urls_str, 'doc_urls_str': doc_urls_str
+        }
+
+        for (k, v) in raw_item.items():
+            if v is None:
+                raw_item[k] = ''
+
+        loader = ItemLoader(item=FarmMachineryItem())
+        loader.add_value('name', name)
+        loader.add_value('category', category)
+        loader.add_value('country', country)
+        loader.add_value('price', price)
+        loader.add_value('quick_details', quick_details)
+        loader.add_value('description', description)
+        loader.add_value('specification', specification)
+        loader.add_value('img_urls', img_urls_str)
+        loader.add_value('video_urls', video_urls_str)
+        loader.add_value('doc_urls', doc_urls_str)
+        loader.add_value('item_url', request_url)
+        loader.add_value('website', 'http://www.alibaba.com')
+
+        item = loader.load_item()
+
+        return item
