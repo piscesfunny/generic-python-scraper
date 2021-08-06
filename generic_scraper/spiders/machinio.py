@@ -24,7 +24,6 @@ class MachinioSpider(scrapy.Spider):
     def __init__(self, param):
         super(MachinioSpider, self).__init__()
 
-
         settings = get_project_settings()
         self.default_headers = settings.get('DEFAULT_REQUEST_HEADERS')
 
