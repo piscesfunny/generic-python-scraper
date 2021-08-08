@@ -1,5 +1,5 @@
 WINDOWS_RET = False
 
-CATEGORY_URL = "https://www.machinio.com/processing"
-SUB_CATEGORY = "Industrial Compressors"
-SUB_CATEGORY_URL = "https://www.alibaba.com/catalog/general-industrial-equipment_cid14?spm=a2700.9161164.10.10.3f694e02XDbDWi"
+CATEGORY_URL = "https://www.machinio.com/?location=&search=circuit+breakers#results"
+SUB_CATEGORY = "Transformer"
+SUB_CATEGORY_URLS = ["https://www.alibaba.com/catalog/transformers_cid141907?spm=a2700.9161164.6.21.6aa84e02Bd6ElT"]

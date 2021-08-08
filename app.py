@@ -1,7 +1,7 @@
 from scrapy.crawler import CrawlerProcess
 from utils.config import *
 from generic_scraper.spiders.machinio import MachinioSpider
-from settings import CATEGORY_URL, SUB_CATEGORY, SUB_CATEGORY_URL
+from settings import CATEGORY_URL, SUB_CATEGORY, SUB_CATEGORY_URLS
 
 os.makedirs(OUTPUT_RESULT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_MEDIA_URL_LIST_DIR, exist_ok=True)
@@ -20,11 +20,11 @@ def start_scrapper(category_url, sub_category_url, sub_category, site_name="mach
     media_urls_file_path = os.path.join(OUTPUT_MEDIA_URL_LIST_DIR, f'{site_name}_{sub_category}_media_urls.txt')
     item_url_file_path = os.path.join(OUTPUT_LIST_DIR, f'{site_name}_{sub_category}_list.csv')
 
-    if os.path.exists(feed_uri):
-        os.remove(feed_uri)
-
-    if os.path.exists(media_urls_file_path):
-        os.remove(media_urls_file_path)
+    # if os.path.exists(feed_uri):
+    #     os.remove(feed_uri)
+    #
+    # if os.path.exists(media_urls_file_path):
+    #     os.remove(media_urls_file_path)
 
     settings = {
         'FEED_FORMAT': 'json',
@@ -48,4 +48,5 @@ def start_scrapper(category_url, sub_category_url, sub_category, site_name="mach
 
 
 if __name__ == '__main__':
-    start_scrapper(category_url=CATEGORY_URL, sub_category=SUB_CATEGORY, sub_category_url=SUB_CATEGORY_URL)
+    for sub_category_ in SUB_CATEGORY_URLS:
+        start_scrapper(category_url=CATEGORY_URL, sub_category=SUB_CATEGORY, sub_category_url=sub_category_)

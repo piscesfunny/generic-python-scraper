@@ -1,7 +1,7 @@
 from scrapy.crawler import CrawlerProcess
 from utils.config import *
 from generic_scraper.spiders.alibaba import AlibabaSpider
-from settings import SUB_CATEGORY, SUB_CATEGORY_URL
+from settings import SUB_CATEGORY, SUB_CATEGORY_URLS
 
 os.makedirs(OUTPUT_RESULT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_MEDIA_URL_LIST_DIR, exist_ok=True)
@@ -49,4 +49,5 @@ def start_scrapper(sub_category_url, sub_category, site_name="alibaba"):
 
 
 if __name__ == '__main__':
-    start_scrapper(sub_category=SUB_CATEGORY, sub_category_url=SUB_CATEGORY_URL)
+    for sub_category_ in SUB_CATEGORY_URLS:
+        start_scrapper(sub_category=SUB_CATEGORY, sub_category_url=sub_category_)

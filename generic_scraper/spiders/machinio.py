@@ -61,24 +61,24 @@ class MachinioSpider(scrapy.Spider):
             with open(self.item_url_file_path, newline='') as f:
                 reader = csv.reader(f)
                 item_urls = list(reader)
-        if not item_urls:
-            print("Items Urls Scrapping...")
-            category_full_url = f'{self.sub_category_url}'
+        print("Items Urls Scrapping...")
+        category_full_url = f'{self.sub_category_url}'
 
-            driver = initialize_chrome_driver()
-            driver.get(url=category_full_url)
-            page_source = scroll_to_bottom(driver, time_delay=1)
-            scrapy_selector = Selector(text=page_source)
+        driver = initialize_chrome_driver()
+        driver.get(url=category_full_url)
+        page_source = scroll_to_bottom(driver, time_delay=1)
+        scrapy_selector = Selector(text=page_source)
 
-            driver.close()
+        driver.close()
 
-            item_selectors = scrapy_selector.css(
-                '.search-results-page > ul > li'
-            )
-            for item_selector in item_selectors:
-                item_url = item_selector.css(
-                    'a.c-listing-card__image-column::attr(href)'
-                ).get()
+        item_selectors = scrapy_selector.css(
+            '.search-results-page > ul > li'
+        )
+        for item_selector in item_selectors:
+            item_url = item_selector.css(
+                'a.c-listing-card__image-column::attr(href)'
+            ).get()
+            if [self.base_url + item_url] not in item_urls:
                 item_urls.append([self.base_url + item_url])
                 with open(self.item_url_file_path, 'a') as csv_file_:
                     file_writer = csv.writer(csv_file_, delimiter=',')
