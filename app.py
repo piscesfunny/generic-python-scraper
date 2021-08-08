@@ -8,7 +8,7 @@ os.makedirs(OUTPUT_MEDIA_URL_LIST_DIR, exist_ok=True)
 os.makedirs(OUTPUT_LIST_DIR, exist_ok=True)
 
 
-def start_scrapper(category_url, sub_category_url, sub_category, site_name="machinio"):
+def start_scrapper(sub_category_urls, sub_category, site_name="machinio"):
     # logger = ScraperLogger(label='APPS', log_file=f'{site_name}.log').logger
 
     feed_uri = os.path.join(OUTPUT_RESULT_DIR, f'{site_name}_{sub_category}_result.json')
@@ -35,9 +35,9 @@ def start_scrapper(category_url, sub_category_url, sub_category, site_name="mach
     process = CrawlerProcess(settings=settings)
 
     process.crawl(MachinioSpider, param={
-        'category_url': category_url,
+        # 'category_url': category_url,
         'sub_category': sub_category,
-        'sub_category_url': sub_category_url,
+        'sub_category_urls': sub_category_urls,
         'media_urls_file_path': media_urls_file_path,
         'processed_url_path': processed_url_file,
         'item_url_file_path': item_url_file_path,
@@ -48,5 +48,4 @@ def start_scrapper(category_url, sub_category_url, sub_category, site_name="mach
 
 
 if __name__ == '__main__':
-    for sub_category_ in SUB_CATEGORY_URLS:
-        start_scrapper(category_url=CATEGORY_URL, sub_category=SUB_CATEGORY, sub_category_url=sub_category_)
+    start_scrapper(sub_category=SUB_CATEGORY, sub_category_urls=SUB_CATEGORY_URLS)

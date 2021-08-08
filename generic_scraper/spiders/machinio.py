@@ -15,7 +15,7 @@ from utils.helpers import initialize_chrome_driver, scroll_to_bottom
 class MachinioSpider(scrapy.Spider):
     name = 'alibaba'
     allowed_domains = ['www.machinio.com']
-    start_urls = ['https://www.machinio.com/']
+    # start_urls = ['https://www.machinio.com/']
 
     base_url = 'https://www.machinio.com'
 
@@ -27,9 +27,9 @@ class MachinioSpider(scrapy.Spider):
         settings = get_project_settings()
         self.default_headers = settings.get('DEFAULT_REQUEST_HEADERS')
 
-        self.category_url = param['category_url']
+        # self.category_url = param['category_url']
         self.sub_category = param['sub_category']
-        self.sub_category_url = param['sub_category_url']
+        self.start_urls = param['sub_category_urls']
         self.media_urls_file_path = param['media_urls_file_path']
         self.processed_urls_file_path = param['processed_url_path']
         self.item_url_file_path = param['item_url_file_path']
@@ -37,6 +37,7 @@ class MachinioSpider(scrapy.Spider):
 
     def start_requests(self):
         for url in self.start_urls:
+            print(f"[INFO] Category URL: {url}")
             yield scrapy.Request(
                 url=url, callback=self.parse, headers=self.default_headers
             )
@@ -47,7 +48,7 @@ class MachinioSpider(scrapy.Spider):
         headers['referer'] = response.request.url
 
         yield scrapy.Request(
-            url=self.category_url, callback=self.parse_categories, headers=headers
+            url=response.request.url, callback=self.parse_categories, headers=headers
         )
 
     def parse_categories(self, response):
@@ -62,7 +63,7 @@ class MachinioSpider(scrapy.Spider):
                 reader = csv.reader(f)
                 item_urls = list(reader)
         print("Items Urls Scrapping...")
-        category_full_url = f'{self.sub_category_url}'
+        category_full_url = response.request.url
 
         driver = initialize_chrome_driver()
         driver.get(url=category_full_url)
