@@ -1,4 +1,6 @@
 WINDOWS_RET = False
 
-SUB_CATEGORY = "Compressor"
-SUB_CATEGORY_URLS = ["https://www.alibaba.com/catalog/general-industrial-equipment_cid14"]
+CATEGORY_URL = "https://www.machinio.com/processing"
+SUB_CATEGORY = "Machine Equipment"
+SUB_CATEGORY_URLS = ["https://www.machinio.com/balancing-machines",
+                     "https://www.machinio.com/bar-tube-straightening#results"]
