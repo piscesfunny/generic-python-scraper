@@ -37,6 +37,10 @@ class MachinioSpider(scrapy.Spider):
         self.list_file_path = param['list_file_path']
         self.media_urls_file_path = param['media_urls_file_path']
         self.feed_uri = param['feed_uri']
+        self.base_category = param['base_category']
+        self.specific_category_url = param['specific_category_url']
+        self.total_page_count = int(param['total_page_count'])
+        self.start_page_number = int(param['start_page_number'])
 
     def start_requests(self):
         for url in self.start_urls:
@@ -45,13 +49,37 @@ class MachinioSpider(scrapy.Spider):
             )
 
     def parse(self, response):
-        category_url = 'https://www.machinio.com/processing'
         headers = self.default_headers
         headers['referer'] = response.request.url
 
-        yield scrapy.Request(
-            url=category_url, callback=self.parse_categories, headers=headers
-        )
+        if self.base_category == CATEGORY_UNKNOWN:
+            if self.scraping_target == SCRAPPING_TARGET_LIST:
+                driver = initialize_chrome_driver()
+                self.get_item_list(
+                    request_url=self.specific_category_url, driver=driver, scrapy_response=response
+                )
+                driver.close()
+            elif self.scraping_target == SCRAPPING_TARGET_ITEM:
+                headers = self.default_headers
+                headers['referer'] = response.request.url
+                with open(self.list_file_path) as f:
+                    item_urls = json.load(f)
+                    for item_url_dict in item_urls:
+                        url = item_url_dict['item_url']
+
+                        yield scrapy.Request(
+                            url=url, callback=self.parse_items, headers=headers,
+                            meta={'category': self.target_category}
+                        )
+
+                        time.sleep(1)
+            else:
+                pass
+        else:
+            category_url = 'https://www.machinio.com/processing'
+            yield scrapy.Request(
+                url=category_url, callback=self.parse_categories, headers=headers
+            )
 
     def parse_categories(self, response):
         if self.action_type == ACTION_GET_CATEGORY:
@@ -203,3 +231,29 @@ class MachinioSpider(scrapy.Spider):
         with open(file_save_path, 'wb') as f:
             f.write(response.body)
             self.logger.info('Saving File %s', file_save_path)
+
+    def get_item_list(self, request_url, driver, scrapy_response):
+        driver.get(url=request_url)
+        page_source = scroll_to_bottom(driver, time_delay=1)
+        scrapy_selector = Selector(text=page_source)
+
+        driver.close()
+
+        item_selectors = scrapy_selector.css(
+            '.search-results-page > ul > li'
+        )
+        item_urls = []
+        for item_selector in item_selectors:
+            item_url = item_selector.css(
+                'a.c-listing-card__image-column::attr(href)'
+            ).get()
+
+            if item_url in item_urls:
+                continue
+
+            item_urls.append(item_url)
+
+            yield {
+                'item_url': scrapy_response.urljoin(item_url)
+            }
+
