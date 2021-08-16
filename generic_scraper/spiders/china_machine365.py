@@ -115,7 +115,7 @@ class ChinaMachine365Spider(scrapy.Spider):
             url = item_url_dict[0]
             item = self.parse_items(request_url=url, category=self.category, headers=headers)
             yield item
-            time.sleep(1)
+            time.sleep(10)
 
     def parse_items(self, request_url, category, headers):
         # self.logger.info(f'Parse Items - {request_url}')
