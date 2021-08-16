@@ -1,11 +1,11 @@
-import os
 import threading
 
 import wget
 from scrapy.crawler import CrawlerProcess
+
+from generic_scraper.spiders.china_machine365 import ChinaMachine365Spider
 from utils.config import *
 from utils.constants import *
-from generic_scraper.spiders.alibaba import AlibabaSpider
 from utils.logging import ScraperLogger
 
 
@@ -13,7 +13,7 @@ def start_scrapper(
     site_name, action_type, target_category=None, scraping_target=None, base_category='farm',
     specific_category_url='', total_page_count=1, start_page_number=1
 ):
-    logger = ScraperLogger(label='APPS', log_file='alibaba.log').logger
+    logger = ScraperLogger(label='APPS', log_file=f'{site_name}.log').logger
     if action_type == ACTION_GET_CATEGORY:
         feed_format = 'json'
         feed_uri = os.path.join(OUTPUT_DIR, f'{site_name}_categories.{feed_format}')
@@ -46,7 +46,7 @@ def start_scrapper(
 
     process = CrawlerProcess(settings=settings)
 
-    process.crawl(AlibabaSpider, param={
+    process.crawl(ChinaMachine365Spider, param={
         'action_type': action_type,
         'target_category': target_category,
         'scraping_target': scraping_target,

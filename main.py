@@ -16,6 +16,7 @@ from apps.steeljis import start_scrapper as steeljis_start_scrapper
 from apps.refractories_worldforum import start_scrapper as refractories_worldforum_start_scrapper
 from apps.hindawi import start_scrapper as hindawi_start_scrapper
 from apps.sweets_construction import start_scrapper as sweets_construction_start_scrapper
+from apps.china_machine365 import start_scrapper as china_machine365_start_scrapper
 from utils.config import *
 from utils.constants import *
 from utils.helpers import validate_parameter
@@ -41,11 +42,15 @@ if __name__ == '__main__':
     ]
 
     if sys.argv[1] in sites_with_three_parameter:
-        validate_parameter(parameter_count=3)
+        validate_parameter(sys.argv, parameter_count=3)
 
     if sys.argv[1] == 'alibaba':
+        base_category = sys.argv[5] if len(sys.argv) > 5 else 'farm'
+        specific_category_url = sys.argv[6] if len(sys.argv) > 6 else ''
+        total_page_count = sys.argv[7] if len(sys.argv) > 7 else 1
+        start_page_number = sys.argv[8] if len(sys.argv) > 8 else 1
         if sys.argv[2] == ACTION_GET_CATEGORY:
-            alibaba_start_scrapper(site_name=sys.argv[1], action_type=sys.argv[2], base_category=sys.argv[5])
+            alibaba_start_scrapper(site_name=sys.argv[1], action_type=sys.argv[2], base_category=base_category)
         elif sys.argv[2] == ACTION_SCRAPPING:
             if len(sys.argv) < 5:
                 logger.info('Target Category or Scraping Target  required !!!')
@@ -56,7 +61,10 @@ if __name__ == '__main__':
                     action_type=sys.argv[2],
                     target_category=sys.argv[3],
                     scraping_target=sys.argv[4],
-                    base_category=sys.argv[5]
+                    base_category=base_category,
+                    specific_category_url=specific_category_url,
+                    total_page_count=total_page_count,
+                    start_page_number=start_page_number
                 )
         elif sys.argv[2] == ACTION_DOWNLOAD:
             alibaba_start_downloader(
@@ -160,4 +168,25 @@ if __name__ == '__main__':
         hindawi_start_scrapper(site_name=sys.argv[1])
 
     if sys.argv[1] == 'sweets_construction':
-        sweets_construction_start_scrapper(site_name=sys.argv[1])
+        sweets_construction_start_scrapper(site_name=sys.argv[1], scraping_target=sys.argv[2])
+
+    if sys.argv[1] == 'china_machine365':
+        base_category = sys.argv[5] if len(sys.argv) > 5 else 'farm'
+        specific_category_url = sys.argv[6] if len(sys.argv) > 6 else ''
+        total_page_count = sys.argv[7] if len(sys.argv) > 7 else 1
+        start_page_number = sys.argv[8] if len(sys.argv) > 8 else 1
+        if sys.argv[2] == ACTION_SCRAPPING:
+            if len(sys.argv) < 5:
+                logger.info('Target Category or Scraping Target  required !!!')
+            else:
+                logger.info(f'{sys.argv[1]}.com spider started')
+                china_machine365_start_scrapper(
+                    site_name=sys.argv[1],
+                    action_type=sys.argv[2],
+                    target_category=sys.argv[3],
+                    scraping_target=sys.argv[4],
+                    base_category=base_category,
+                    specific_category_url=specific_category_url,
+                    total_page_count=total_page_count,
+                    start_page_number=start_page_number
+                )
