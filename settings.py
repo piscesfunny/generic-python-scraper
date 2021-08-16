@@ -1,7 +1,6 @@
 WINDOWS_RET = False
 
 CATEGORY_URL = "https://www.machinio.com/processing"
-SUB_CATEGORY = "Machine Equipment"
-SUB_CATEGORY_URLS = ["https://www.machinio.com/balancing-machines",
-                     "https://www.machinio.com/bar-tube-straightening#results"]
-PAGE_NUM = 67
+SUB_CATEGORY = "Transformer"
+SUB_CATEGORY_URLS = ["http://china.machine365.com/Product/Selllist-964.shtml"]
+PAGE_NUM = 1

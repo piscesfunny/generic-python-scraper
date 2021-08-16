@@ -1,4 +1,4 @@
-import json
+import os
 import time
 import csv
 
@@ -9,8 +9,6 @@ from scrapy.selector import Selector
 from scrapy.utils.project import get_project_settings
 
 from generic_scraper.items import FarmMachineryItem
-from utils.constants import *
-# from utils.logging import ScraperLogger
 
 
 class ChinaMachine365Spider(scrapy.Spider):
@@ -47,40 +45,38 @@ class ChinaMachine365Spider(scrapy.Spider):
         headers = self.default_headers
         headers['referer'] = response.request.url
 
-        if self.base_category == CATEGORY_UNKNOWN:
-            if self.scraping_target == SCRAPPING_TARGET_LIST:
-                yield scrapy.Request(
-                    url=self.specific_category_url, callback=self.parse_list, headers=headers
-                )
-            elif self.scraping_target == SCRAPPING_TARGET_ITEM:
-                headers = self.default_headers
-                headers['referer'] = response.request.url
-                with open(self.list_file_path) as f:
-                    item_urls = json.load(f)
-                    for item_url_dict in item_urls:
-                        url = item_url_dict['item_url']
-
-                        yield scrapy.Request(
-                            url=url, callback=self.parse_items, headers=headers,
-                            meta={'category': self.target_category}
-                        )
-
-                        time.sleep(1)
-            else:
-                pass
+        yield scrapy.Request(
+            url=self.category_url, callback=self.parse_list, headers=headers
+        )
 
     def parse_list(self, response):
         headers = self.default_headers
         headers['referer'] = response.request.url
-        self.logger.info(f'Parse List - {response.request.url}')
+        # self.logger.info(f'Parse List - {response.request.url}')
 
-        main_url = self.specific_category_url
+        main_url = self.category_url
+        if not os.path.exists(self.processed_page_path):
+            with open(self.processed_page_path, 'w') as csv_file:
+                csv.writer(csv_file, delimiter=',')
+                processed_pages = []
+        else:
+            with open(self.processed_page_path, newline='') as f:
+                reader = csv.reader(f)
+                processed_pages = list(reader)
+        if not os.path.exists(self.item_url_file_path):
+            with open(self.item_url_file_path, 'w') as csv_file:
+                csv.writer(csv_file, delimiter=',')
+
         for page_number in range(self.start_page_number, self.total_page_count+1):
             try:
+                if [str(page_number)] in processed_pages:
+                    continue
+                print(f"Current Page: {page_number}")
                 request_url = f'{main_url}?pages={page_number}'
 
                 r = requests.get(url=request_url, headers=headers, timeout=30)
-                self.logger.info(f'Current page url: {request_url}')
+                # self.logger.info(f'Current page url: {request_url}')
+                print(f'Current page url: {request_url}')
 
                 time.sleep(5)
 
@@ -90,20 +86,42 @@ class ChinaMachine365Spider(scrapy.Spider):
                 products_per_page = selector.css('#datas > div')
                 for product in products_per_page:
                     item_url = product.css('a::attr(href)').get()
-
-                    yield {
-                        'item_url': response.urljoin(item_url)
-                    }
-            except Exception as e:
-                self.logger.info(f'Error page number: {page_number}')
+                    with open(self.item_url_file_path, 'a') as csv_file_:
+                        file_writer = csv.writer(csv_file_, delimiter=',')
+                        file_writer.writerow([item_url])
+                with open(self.processed_page_path, 'a') as csv_file_:
+                    file_writer = csv.writer(csv_file_, delimiter=',')
+                    file_writer.writerow([page_number])
+            except Exception as err:
+                # self.logger.info(f'Error page number: {page_number}')
+                print(f'Error page number: {page_number}, {err}')
                 break
+        with open(self.item_url_file_path, newline='') as f:
+            reader = csv.reader(f)
+            item_urls = list(reader)
+        if not os.path.exists(self.processed_url_path):
+            with open(self.processed_url_path, 'w') as csv_file:
+                csv.writer(csv_file, delimiter=',')
+                processed_urls = []
+        else:
+            with open(self.processed_url_path, newline='') as f:
+                reader = csv.reader(f)
+                processed_urls = list(reader)
+        for item_url_dict in item_urls:
+            if item_url_dict in processed_urls:
+                continue
+            if item_url_dict[0] == "":
+                continue
+            url = item_url_dict[0]
+            item = self.parse_items(request_url=url, category=self.category, headers=headers)
+            yield item
+            time.sleep(1)
 
-    def parse_items(self, response):
-        request_url = response.request.url
-        self.logger.info(f'Parse Items - {request_url}')
-
-        category = response.meta['category']
-
+    def parse_items(self, request_url, category, headers):
+        # self.logger.info(f'Parse Items - {request_url}')
+        print(f'Parse Items - {request_url}')
+        r = requests.get(url=request_url, headers=headers, timeout=30)
+        response = Selector(text=r.text)
         name = response.css('.dc-t-r-title::text').get()
         price = response.css('.input-shell.price .is-r-price::text').get()
         quick_details = response.css('.hr2-left > .details-bottom').get()
@@ -155,5 +173,8 @@ class ChinaMachine365Spider(scrapy.Spider):
         loader.add_value('website', self.start_urls[0])
 
         item = loader.load_item()
+        with open(self.processed_url_path, 'a') as csv_file_:
+            file_writer = csv.writer(csv_file_, delimiter=',')
+            file_writer.writerow([request_url])
 
         return item
