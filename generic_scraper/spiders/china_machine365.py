@@ -1,5 +1,6 @@
 import json
 import time
+import csv
 
 import requests
 import scrapy
@@ -9,7 +10,7 @@ from scrapy.utils.project import get_project_settings
 
 from generic_scraper.items import FarmMachineryItem
 from utils.constants import *
-from utils.logging import ScraperLogger
+# from utils.logging import ScraperLogger
 
 
 class ChinaMachine365Spider(scrapy.Spider):
@@ -22,20 +23,19 @@ class ChinaMachine365Spider(scrapy.Spider):
     def __init__(self, param):
         super(ChinaMachine365Spider, self).__init__()
 
-        self.logger = ScraperLogger(label='SPIDER', log_file=f'{self.name}.log').logger
+        # self.logger = ScraperLogger(label='SPIDER', log_file=f'{self.name}.log').logger
 
         settings = get_project_settings()
         self.default_headers = settings.get('DEFAULT_REQUEST_HEADERS')
 
-        self.action_type = param['action_type']
-        self.target_category = param['target_category']
-        self.scraping_target = param['scraping_target']
-        self.list_file_path = param['list_file_path']
+        self.item_url_file_path = param['item_url_file_path']
         self.media_urls_file_path = param['media_urls_file_path']
-        self.base_category = param['base_category']
-        self.specific_category_url = param['specific_category_url']
-        self.total_page_count = int(param['total_page_count'])
-        self.start_page_number = int(param['start_page_number'])
+        self.category = param['sub_category']
+        self.category_url = param['sub_category_url']
+        self.processed_url_path = param['processed_url_path']
+        self.processed_page_path = param["processed_page_path"]
+        self.total_page_count = param["total_page_num"]
+        self.start_page_number = 1
 
     def start_requests(self):
         for url in self.start_urls:
