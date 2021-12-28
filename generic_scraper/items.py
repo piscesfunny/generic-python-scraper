@@ -21,6 +21,10 @@ class FarmMachineryItem(Item):
         input_processor=MapCompose(str.strip),
         output_processor=Join()
     )
+    price = Field(
+        input_processor=MapCompose(str.strip),
+        output_processor=Join()
+    )
     quick_details = Field(
         input_processor=MapCompose(str.strip),
         output_processor=Join()

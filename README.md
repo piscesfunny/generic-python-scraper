@@ -9,3 +9,10 @@
     
 # Download media files:
     python main.py alibaba download Tractors
+
+# Specific category
+
+## Get item List
+    python main.py alibaba scraping circuit_breakers list unknown https://www.alibaba.com/catalog/circuit-breakers_cid141914 100 1
+## Get items
+    python main.py alibaba scraping transformer item unknown
