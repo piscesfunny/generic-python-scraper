@@ -1,4 +1,5 @@
 ACTION_GET_CATEGORY = 'get_category'
+ACTION_GET_LIST = 'get_list'
 ACTION_SCRAPPING = 'scraping'
 ACTION_DOWNLOAD = 'download'
 ACTION_FILTER = 'filter'

@@ -16,6 +16,7 @@ from apps.steeljis import start_scrapper as steeljis_start_scrapper
 from apps.refractories_worldforum import start_scrapper as refractories_worldforum_start_scrapper
 from apps.hindawi import start_scrapper as hindawi_start_scrapper
 from apps.sweets_construction import start_scrapper as sweets_construction_start_scrapper
+from apps.scitechdaily import start_scrapper as scitechdaily_start_scrapper
 from utils.config import *
 from utils.constants import *
 from utils.helpers import validate_parameter
@@ -161,3 +162,6 @@ if __name__ == '__main__':
 
     if sys.argv[1] == 'sweets_construction':
         sweets_construction_start_scrapper(site_name=sys.argv[1], scraping_target=sys.argv[2])
+
+    if sys.argv[1] == 'scitechdaily':
+        scitechdaily_start_scrapper(site_name=sys.argv[1], action_type=sys.argv[2], target_category=sys.argv[3])

@@ -1,4 +1,6 @@
 import json
+import os
+import platform
 import time
 
 from selenium import webdriver
@@ -7,16 +9,24 @@ from utils.config import WEBDRIVER_DIR
 from utils.logging import ScraperLogger
 
 
-def initialize_chrome_driver():
+def initialize_chrome_driver(maximized=True):
     options = webdriver.ChromeOptions()
     # options.add_argument('--headless')
     # options.add_argument('--no-sandbox')
-    options.add_argument('--start-maximized')
+    if maximized:
+        options.add_argument('--start-maximized')
     desired_capabilities = options.to_capabilities()
     # driver = webdriver.Chrome(executable_path='/usr/lib/chromium-browser/chromedriver', chrome_options=options)
     # driver = webdriver.Chrome(desired_capabilities=desired_capabilities)
+    os_type = platform.system()
+    if os_type == 'Linux':
+        executable_path = f'{WEBDRIVER_DIR}/chromedriver'
+    elif os_type == 'Windows':
+        executable_path = f'{WEBDRIVER_DIR}/chromedriver.exe'
+    else:
+        executable_path = ''
 
-    driver = webdriver.Chrome(executable_path=f'{WEBDRIVER_DIR}/chromedriver.exe', chrome_options=options)
+    driver = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
 
     return driver
 
@@ -53,8 +63,10 @@ def write_results_to_json(feed_uri, items, write_mode='w'):
         outfile.close()
 
 
-def write_results_to_txt(feed_uri, item_urls):
-    with open(feed_uri, "w") as f:
+def write_results_to_txt(feed_uri, item_urls, f_open_mode="w"):
+    _f_open_mode = f_open_mode if os.path.exists(feed_uri) else 'w'
+
+    with open(feed_uri, f_open_mode) as f:
         for url in item_urls:
             f.write(f'{url}\n')
 
