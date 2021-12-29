@@ -15,6 +15,8 @@ def initialize_chrome_driver(maximized=True):
     # options.add_argument('--no-sandbox')
     if maximized:
         options.add_argument('--start-maximized')
+    else:
+        options.add_argument("window-size=800,600")
     desired_capabilities = options.to_capabilities()
     # driver = webdriver.Chrome(executable_path='/usr/lib/chromium-browser/chromedriver', chrome_options=options)
     # driver = webdriver.Chrome(desired_capabilities=desired_capabilities)
