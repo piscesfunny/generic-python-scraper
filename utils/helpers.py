@@ -9,7 +9,7 @@ from utils.config import WEBDRIVER_DIR
 from utils.logging import ScraperLogger
 
 
-def initialize_chrome_driver(maximized=True):
+def initialize_chrome_driver(maximized=True, printable=False):
     options = webdriver.ChromeOptions()
     # options.add_argument('--headless')
     # options.add_argument('--no-sandbox')
@@ -27,6 +27,21 @@ def initialize_chrome_driver(maximized=True):
         executable_path = f'{WEBDRIVER_DIR}/chromedriver.exe'
     else:
         executable_path = ''
+
+    if printable:
+        settings = {
+            "recentDestinations": [{
+                "id": "Save as PDF",
+                "origin": "local",
+                "account": "",
+            }],
+            "selectedDestinationId": "Save as PDF",
+            "version": 2
+        }
+        # save_dir = os.path.join(OUTPUT_MEDIA_DIR)
+        prefs = {'printing.print_preview_sticky_settings.appState': json.dumps(settings)}
+        options.add_experimental_option('prefs', prefs)
+        options.add_argument('--kiosk-printing')
 
     driver = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
 

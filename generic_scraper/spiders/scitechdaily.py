@@ -80,7 +80,7 @@ class SciTechDailySpider(scrapy.Spider):
         headers = self.default_headers
         headers['referer'] = self.category_url
 
-        driver = initialize_chrome_driver(maximized=False)
+        driver = initialize_chrome_driver(maximized=False, printable=True)
 
         for url in urls:
             try:
@@ -103,11 +103,8 @@ class SciTechDailySpider(scrapy.Spider):
 
                 time.sleep(2)
 
-                pyautogui.hotkey('ctrl', 'p')
-                time.sleep(5)
-                pyautogui.press('enter')
-                time.sleep(1)
-                pyautogui.press('enter')
+                driver.execute_script('window.print();')
+
                 time.sleep(5)
 
                 self.logger.info(f'success_url: {url}')
