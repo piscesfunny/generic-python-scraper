@@ -2,6 +2,7 @@ import json
 import os
 import platform
 import time
+import pandas as pd
 
 from selenium import webdriver
 
@@ -112,3 +113,11 @@ def validate_parameter(argv, parameter_count=1):
     if len(argv) < parameter_count:
         logger.info('Parameter is required !!!')
         exit(1)
+
+
+def write_results_to_csv(output_f_path, items):
+    df = pd.DataFrame(items)
+    if os.path.exists(output_f_path):
+        df.to_csv(output_f_path, mode='a', header=False, index=False)
+    else:
+        df.to_csv(output_f_path, index=False)

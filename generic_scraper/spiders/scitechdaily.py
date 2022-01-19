@@ -108,6 +108,7 @@ class SciTechDailySpider(scrapy.Spider):
                 time.sleep(5)
 
                 self.logger.info(f'success_url: {url}')
+                print(f'success_url: {url}')
 
             except Exception as e:
                 self.logger.info(f'Error: {url}')
