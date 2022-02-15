@@ -3,6 +3,7 @@ import os
 import platform
 import time
 import pandas as pd
+import wget
 
 from selenium import webdriver
 
@@ -10,7 +11,7 @@ from utils.config import WEBDRIVER_DIR
 from utils.logging import ScraperLogger
 
 
-def initialize_chrome_driver(maximized=True, printable=False):
+def initialize_chrome_driver(maximized=True, printable=False, save_dir=None):
     options = webdriver.ChromeOptions()
     # options.add_argument('--headless')
     # options.add_argument('--no-sandbox')
@@ -39,8 +40,9 @@ def initialize_chrome_driver(maximized=True, printable=False):
             "selectedDestinationId": "Save as PDF",
             "version": 2
         }
-        # save_dir = os.path.join(OUTPUT_MEDIA_DIR)
         prefs = {'printing.print_preview_sticky_settings.appState': json.dumps(settings)}
+        if save_dir:
+            prefs['savefile.default_directory'] = save_dir
         options.add_experimental_option('prefs', prefs)
         options.add_argument('--kiosk-printing')
 
@@ -121,3 +123,40 @@ def write_results_to_csv(output_f_path, items):
         df.to_csv(output_f_path, mode='a', header=False, index=False)
     else:
         df.to_csv(output_f_path, index=False)
+
+
+def read_file(f_path, file_format='csv'):
+    result = []
+
+    if not os.path.exists(f_path):
+        return result
+
+    if file_format == 'csv':
+        df = pd.read_csv(f_path)
+        result = df.to_dict('records')
+    elif file_format == 'txt':
+        with open(f_path, "r") as f:
+            result = f.read().splitlines()
+    else:
+        pass
+
+    return result
+
+
+def download_image_by_wget(url_list, output_dir, failed_file_path):
+    failed_urls = []
+    for img_url in url_list:
+        try:
+            image_filename = wget.download(url=img_url, out=output_dir)
+            time.sleep(30)
+        except Exception as e:
+            print('Downloaded Failed: ', img_url)
+            failed_urls.append(img_url)
+            continue
+
+        print('Successfully Downloaded: ', image_filename)
+
+    if len(failed_urls) > 0:
+        with open(failed_file_path, "a") as f:
+            for url in failed_urls:
+                f.write(f'{url}\n')
