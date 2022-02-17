@@ -104,6 +104,8 @@ class OnlineEpocratesSpider(scrapy.Spider):
     def get_items(self, items):
         progress_f_path = os.path.join(OUTPUT_DIR, 'progress.txt')
         processed_item_urls = read_file(progress_f_path, file_format="txt")
+        failed_item_urls = read_file(self.result_list_err_f_path)
+        skip_urls = processed_item_urls + failed_item_urls
         prev_save_dir = None
         for item in items:
             category = item.get('category')
@@ -111,7 +113,7 @@ class OnlineEpocratesSpider(scrapy.Spider):
             sub_cls_name = item.get('sub_cls_name').replace("/", "_").replace(" ", "_")
             item_url = item.get('item_url')
 
-            if item_url in processed_item_urls:
+            if item_url in skip_urls:
                 self.logger.info(f'Skipped url: {item_url}')
                 print(f'Skipped url: {item_url}')
                 continue
@@ -140,7 +142,7 @@ class OnlineEpocratesSpider(scrapy.Spider):
 
                 driver.execute_script('window.print();')
 
-                time.sleep(10)
+                time.sleep(5)
 
                 item_urls = [item_url]
                 write_results_to_txt(progress_f_path, item_urls, f_open_mode="a")
