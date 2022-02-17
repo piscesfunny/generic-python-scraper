@@ -19,6 +19,7 @@ from apps.sweets_construction import start_scrapper as sweets_construction_start
 from apps.scitechdaily import start_scrapper as scitechdaily_start_scrapper
 from apps.parts_cat import start_scrapper as parts_cat_start_scrapper
 from apps.general_kinematics import start_scrapper as general_kinematics_start_scrapper
+from apps.online_epocrates import start_scrapper as online_epocrates_start_scrapper
 from utils.config import *
 from utils.constants import *
 from utils.helpers import validate_parameter
@@ -192,3 +193,11 @@ if __name__ == '__main__':
             )
         else:
             pass
+    if sys.argv[1] == 'online_epocrates':
+        logger.info(f'{sys.argv[1]}.com spider started')
+        online_epocrates_start_scrapper(
+            site_name=sys.argv[1],
+            action_type=sys.argv[2],
+            target_category=sys.argv[3],
+            scraping_target=sys.argv[4]
+        )
