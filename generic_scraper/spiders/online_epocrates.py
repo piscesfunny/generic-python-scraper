@@ -104,7 +104,8 @@ class OnlineEpocratesSpider(scrapy.Spider):
     def get_items(self, items):
         progress_f_path = os.path.join(OUTPUT_DIR, 'progress.txt')
         processed_item_urls = read_file(progress_f_path, file_format="txt")
-        failed_item_urls = read_file(self.result_list_err_f_path)
+        failed_items = read_file(self.result_list_err_f_path)
+        failed_item_urls = [item.get("item_url") for item in failed_items]
         skip_urls = processed_item_urls + failed_item_urls
         prev_save_dir = None
         for item in items:
