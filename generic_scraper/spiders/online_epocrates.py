@@ -59,41 +59,65 @@ class OnlineEpocratesSpider(scrapy.Spider):
             ]
             driver = initialize_chrome_driver()
             driver = self.login(driver)
-            for category_url in category_urls:
+
+            if self.target_category == "drugs":
+                category_url = category_urls[0]
                 driver.get(category_url)
-                if self.target_category == "drugs":
-                    cls_elements = driver.find_elements(By.CSS_SELECTOR, "div#classlist > ul > li > a")
-                    if cls_elements:
-                        cls_elements.pop(0)
-                    for cls_element in cls_elements:
-                        cls_name = cls_element.get_attribute("title")
-                        cls_element.click()
+                cls_elements = driver.find_elements(By.CSS_SELECTOR, "div#classlist > ul > li > a")
+                if cls_elements:
+                    cls_elements.pop(0)
+                for cls_element in cls_elements:
+                    cls_name = cls_element.get_attribute("title")
+                    cls_element.click()
+                    time.sleep(delay)
+                    sub_cls_elements = driver.find_elements(By.CSS_SELECTOR, "div#subclasslist > ul > li > a")
+                    for sub_cls_element in sub_cls_elements:
+                        items = []
+                        sub_cls_name = sub_cls_element.get_attribute("title")
+                        sub_cls_element.click()
                         time.sleep(delay)
-                        sub_cls_elements = driver.find_elements(By.CSS_SELECTOR, "div#subclasslist > ul > li > a")
-                        for sub_cls_element in sub_cls_elements:
-                            items = []
-                            sub_cls_name = sub_cls_element.get_attribute("title")
-                            sub_cls_element.click()
-                            time.sleep(delay)
-                            scrapy_selector = Selector(text=driver.page_source)
-                            item_selectors = scrapy_selector.css('div#drugTableBody > table tr td a')
-                            for item_selector in item_selectors:
-                                item_url = item_selector.css('::attr(href)').get()
-                                if item_url:
-                                    item_url = f"{self.base_url}{item_url}"
-                                    items.append({
-                                        'category': self.target_category,
-                                        'cls_name': cls_name,
-                                        'sub_cls_name': sub_cls_name,
-                                        'item_url': item_url
-                                    })
+                        scrapy_selector = Selector(text=driver.page_source)
+                        item_selectors = scrapy_selector.css('div#drugTableBody > table tr td a')
+                        for item_selector in item_selectors:
+                            item_url = item_selector.css('::attr(href)').get()
+                            if item_url:
+                                item_url = f"{self.base_url}{item_url}"
+                                items.append({
+                                    'category': self.target_category,
+                                    'cls_name': cls_name,
+                                    'sub_cls_name': sub_cls_name,
+                                    'item_url': item_url
+                                })
 
-                            write_results_to_csv(self.result_list_suc_f_path, items)
+                        write_results_to_csv(self.result_list_suc_f_path, items)
 
-                            self.logger.info(f'Get list - category: {self.target_category} - item count: {len(items)}')
-                            print(f'Get list - category: {self.target_category} - item count: {len(items)}')
+                        self.logger.info(f'Get list - category: {self.target_category} - item count: {len(items)}')
+                        print(f'Get list - category: {self.target_category} - item count: {len(items)}')
 
-                            time.sleep(1)
+                        time.sleep(1)
+            elif self.target_category == "diseases":
+                progress_f_path = os.path.join(OUTPUT_DIR, f"progress_{self.target_category}.txt")
+                processed_item_urls = read_file(progress_f_path, file_format="txt")
+                failed_items = read_file(self.result_list_err_f_path)
+                failed_item_urls = [item.get("item_url") for item in failed_items]
+                skip_urls = processed_item_urls + failed_item_urls
+                prev_save_dir = None
+
+                category_url = category_urls[1]
+                driver.get(category_url)
+                cls_elements = driver.find_elements(By.CSS_SELECTOR, "ul.disease-categories-list > li > a")
+                if cls_elements:
+                    cls_elements.pop(0)
+                for cls_element in cls_elements:
+                    cls_name = cls_element.text
+                    cls_element.click()
+                    item_elements = driver.find_elements(By.CSS_SELECTOR, "ul.alphabet-list-items > li > a")
+                    for item_element in item_elements:
+                        item_name = cls_element.text
+                        item_element.click()
+
+                        driver.back()
+
         elif self.scraping_target == SCRAPPING_TARGET_ITEM:
             items = read_file(self.result_list_suc_f_path)
 
@@ -102,16 +126,21 @@ class OnlineEpocratesSpider(scrapy.Spider):
             pass
 
     def get_items(self, items):
-        progress_f_path = os.path.join(OUTPUT_DIR, 'progress.txt')
+        progress_f_path = os.path.join(OUTPUT_DIR, f"progress_{self.target_category}.txt")
         processed_item_urls = read_file(progress_f_path, file_format="txt")
         failed_items = read_file(self.result_list_err_f_path)
         failed_item_urls = [item.get("item_url") for item in failed_items]
         skip_urls = processed_item_urls + failed_item_urls
         prev_save_dir = None
+        driver = None
         for item in items:
             category = item.get('category')
-            cls_name = item.get('cls_name').replace("/", "_").replace(" ", "_")
-            sub_cls_name = item.get('sub_cls_name').replace("/", "_").replace(" ", "_")
+            cls_name = item.get('cls_name')
+            sub_cls_name = item.get('sub_cls_name')
+            for char in ["/", "\\", ":", "*", "?", "\"", "<", ">", "|"]:
+                cls_name = cls_name.replace(char, "_")
+                sub_cls_name = sub_cls_name.replace(char, "_")
+
             item_url = item.get('item_url')
 
             if item_url in skip_urls:
@@ -119,14 +148,14 @@ class OnlineEpocratesSpider(scrapy.Spider):
                 print(f'Skipped url: {item_url}')
                 continue
 
-            item_name = item_url.split('/')[-1]
-
             category_dir = os.path.join(OUTPUT_RESULT_DIR, category)
             cls_dir = os.path.join(category_dir, cls_name)
             save_dir = os.path.join(cls_dir, sub_cls_name)
             os.makedirs(save_dir, exist_ok=True)
 
             if prev_save_dir != save_dir:
+                if driver:
+                    driver.close()
                 driver = initialize_chrome_driver(printable=True, save_dir=save_dir)
                 driver = self.login(driver)
 
@@ -135,8 +164,8 @@ class OnlineEpocratesSpider(scrapy.Spider):
             item_monograph_url = f"{item_url}/Monograph"
             driver.get(item_monograph_url)
             try:
-                WebDriverWait(driver, 30).until(EC.presence_of_element_located(
-                    (By.XPATH, "//*[@id='rx_navSections']/div/ul/li[1]/a")))
+                # WebDriverWait(driver, 30).until(EC.presence_of_element_located(
+                #     (By.XPATH, "//*[@id='rx_navSections']/div/ul/li[1]/a")))
                 time.sleep(2)
                 driver.find_element(By.XPATH, "//*[@id='rx_navSections']/div/ul/li[1]/a").click()
                 time.sleep(2)

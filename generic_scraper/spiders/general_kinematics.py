@@ -86,7 +86,7 @@ class GeneralKinematicsSpider(scrapy.Spider):
 
     def get_items(self, items):
         driver = None
-        progress_f_path = os.path.join(OUTPUT_DIR, 'progress.txt')
+        progress_f_path = os.path.join(OUTPUT_DIR, 'progress_drugs.txt')
         processed_item_urls = read_file(progress_f_path, file_format="txt")
 
         for item in items:
