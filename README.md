@@ -16,3 +16,9 @@
     python main.py alibaba scraping circuit_breakers list unknown https://www.alibaba.com/catalog/circuit-breakers_cid141914 100 1
 ## Get items
     python main.py alibaba scraping transformer item unknown
+
+
+# Run by spider
+## online_epocrates
+    $ python main.py online_epocrates scraping drugs list
+    $ python main.py online_epocrates scraping drugs item
