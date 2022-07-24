@@ -18,3 +18,5 @@ output
 logs
 backup
 temp
+webdriver
+config

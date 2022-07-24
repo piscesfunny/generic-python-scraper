@@ -2,12 +2,14 @@ import json
 import os
 import time
 
+import requests
 import scrapy
 from scrapy.selector import Selector
 from scrapy.utils.project import get_project_settings
 from selenium.common.exceptions import NoSuchElementException
 
 from utils.config import OUTPUT_RESULT_DIR
+from utils.constants import SCRAPPING_TARGET_ITEM
 from utils.helpers import initialize_chrome_driver, write_results_to_json
 from utils.logging import ScraperLogger
 
@@ -29,6 +31,7 @@ class SweetsConstructionSpider(scrapy.Spider):
         settings = get_project_settings()
         self.default_headers = settings.get('DEFAULT_REQUEST_HEADERS')
 
+        self.scraping_target = param['scraping_target']
         self.category_file_path = param['category_file_path']
         self.list_file_path = param['list_file_path']
         self.media_urls_file_path = param['media_urls_file_path']
@@ -41,21 +44,62 @@ class SweetsConstructionSpider(scrapy.Spider):
             )
 
     def parse(self, response):
-        with open(self.category_file_path) as f:
-            categories = json.load(f)
+        if self.scraping_target == SCRAPPING_TARGET_ITEM:
+            with open(self.list_file_path) as f:
+                items = json.load(f)
 
-        driver = initialize_chrome_driver()
+            total_items = []
+            for item in items:
+                headers = self.default_headers
+                headers['referer'] = response.request.url
 
-        for category in categories:
-            category_name = category['name']
-            category_url = category['url']
+                category = item['category']
+                name = item['name']
+                manufacturer = item['manufacturer']
+                search_category = item['search_category']
+                master_format = item['master_format']
+                item_url = item['item_url']
+                img_url = item['img_url']
 
-            items = self.get_items(request_url=category_url, category=category_name, driver=driver)
-            print(len(items))
+                response = requests.get(url=item_url, headers=headers, timeout=30)
+                item_selector = Selector(text=response.text)
 
-            time.sleep(1)
+                description = item_selector.css('#productDesc .prd-overview').get()
+                overview = item_selector.css('#overviewContent').get()
+                specification = item_selector.css('#specificationTable table.SpecificationTable').get()
 
-        driver.close()
+                raw_item = {
+                    'category': category, 'name': name, 'search_category': search_category, 'manufacturer': manufacturer,
+                    'master_format': master_format, 'description': description, 'overview': overview,
+                    'specification': specification, 'img_url': img_url, 'item_url': item_url
+                }
+
+                for (k, v) in raw_item.items():
+                    if v is None:
+                        raw_item[k] = ''
+
+                total_items.append(raw_item)
+
+                time.sleep(1)
+
+            write_results_to_json(feed_uri=self.feed_uri, items=total_items, write_mode='a')
+
+        else:
+            with open(self.category_file_path) as f:
+                categories = json.load(f)
+
+            driver = initialize_chrome_driver()
+
+            for category in categories:
+                category_name = category['name']
+                category_url = category['url']
+
+                items = self.get_items(request_url=category_url, category=category_name, driver=driver)
+                print(len(items))
+
+                time.sleep(1)
+
+            driver.close()
 
     def get_items(self, request_url, category, driver):
         self.logger.info(f'Parse Items - {request_url}')

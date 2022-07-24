@@ -16,6 +16,11 @@ from apps.steeljis import start_scrapper as steeljis_start_scrapper
 from apps.refractories_worldforum import start_scrapper as refractories_worldforum_start_scrapper
 from apps.hindawi import start_scrapper as hindawi_start_scrapper
 from apps.sweets_construction import start_scrapper as sweets_construction_start_scrapper
+from apps.scitechdaily import start_scrapper as scitechdaily_start_scrapper
+from apps.parts_cat import start_scrapper as parts_cat_start_scrapper
+from apps.general_kinematics import start_scrapper as general_kinematics_start_scrapper
+from apps.online_epocrates import start_scrapper as online_epocrates_start_scrapper
+from apps.navi_cnki_net import start_scrapper as navi_cnki_net_start_scrapper
 from utils.config import *
 from utils.constants import *
 from utils.helpers import validate_parameter
@@ -160,4 +165,48 @@ if __name__ == '__main__':
         hindawi_start_scrapper(site_name=sys.argv[1])
 
     if sys.argv[1] == 'sweets_construction':
-        sweets_construction_start_scrapper(site_name=sys.argv[1])
+        sweets_construction_start_scrapper(site_name=sys.argv[1], scraping_target=sys.argv[2])
+
+    if sys.argv[1] == 'scitechdaily':
+        scitechdaily_start_scrapper(site_name=sys.argv[1], action_type=sys.argv[2], target_category=sys.argv[3])
+
+    if sys.argv[1] == 'parts_cat':
+        if sys.argv[2] == ACTION_GET_CATEGORY:
+            machinio_start_scrapper(site_name=sys.argv[1], action_type=sys.argv[2])
+        elif sys.argv[2] == ACTION_SCRAPPING:
+            logger.info(f'{sys.argv[1]}.com spider started')
+            parts_cat_start_scrapper(
+                site_name=sys.argv[1],
+                action_type=sys.argv[2],
+                target_category=sys.argv[3],
+                scraping_target=sys.argv[4]
+            )
+        else:
+            pass
+
+    if sys.argv[1] == 'general_kinematics':
+        if sys.argv[2] == ACTION_SCRAPPING:
+            logger.info(f'{sys.argv[1]}.com spider started')
+            general_kinematics_start_scrapper(
+                site_name=sys.argv[1],
+                action_type=sys.argv[2],
+                scraping_target=sys.argv[3]
+            )
+        else:
+            pass
+    if sys.argv[1] == 'online_epocrates':
+        logger.info(f'{sys.argv[1]}.com spider started')
+        online_epocrates_start_scrapper(
+            site_name=sys.argv[1],
+            action_type=sys.argv[2],
+            target_category=sys.argv[3],
+            scraping_target=sys.argv[4]
+        )
+    if sys.argv[1] == 'navi_cnki_net':
+        logger.info(f'{sys.argv[1]}.com spider started')
+        navi_cnki_net_start_scrapper(
+            site_name=sys.argv[1],
+            action_type=sys.argv[2],
+            target_category=sys.argv[3],
+            scraping_target=sys.argv[4]
+        )

@@ -5,3 +5,4 @@ selenium~=3.141.0
 wget~=3.2
 requests~=2.25.1
 scraperapi-sdk==0.2.2
+PyAutoGUI~=0.9.53
