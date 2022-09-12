@@ -21,6 +21,7 @@ from apps.parts_cat import start_scrapper as parts_cat_start_scrapper
 from apps.general_kinematics import start_scrapper as general_kinematics_start_scrapper
 from apps.online_epocrates import start_scrapper as online_epocrates_start_scrapper
 from apps.navi_cnki_net import start_scrapper as navi_cnki_net_start_scrapper
+from apps.patentscope_wipo_int import start_scrapper as pwi_start_scrapper
 from utils.config import *
 from utils.constants import *
 from utils.helpers import validate_parameter
@@ -209,4 +210,14 @@ if __name__ == '__main__':
             action_type=sys.argv[2],
             target_category=sys.argv[3],
             scraping_target=sys.argv[4]
+        )
+
+    if sys.argv[1] == 'patentscope_wipo_int':
+        pwi_start_scrapper(
+            site_name=sys.argv[1],
+            action_type=sys.argv[2],
+            target_year=int(sys.argv[3]),
+            target_start_week=int(sys.argv[4]),
+            target_end_week=int(sys.argv[5]),
+            scraping_target=sys.argv[6]
         )

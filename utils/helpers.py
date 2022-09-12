@@ -1,6 +1,7 @@
 import json
 import os
 import platform
+import re
 import time
 import pandas as pd
 import wget
@@ -160,3 +161,8 @@ def download_image_by_wget(url_list, output_dir, failed_file_path):
         with open(failed_file_path, "a") as f:
             for url in failed_urls:
                 f.write(f'{url}\n')
+
+
+def extract_substr_between_two_marks(text, mark1, mark2):
+    m = re.search(f'{mark1}(.+?){mark2}', text)
+    return m.group(1) if m else None
