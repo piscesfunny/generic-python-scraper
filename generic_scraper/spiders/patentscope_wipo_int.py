@@ -82,10 +82,10 @@ class PatentScopeWipoSpider(scrapy.Spider):
         headers['referer'] = response.request.url
 
         for i in range(self.target_start_week, self.target_end_week + 1):
-            input_f_name = f'patentscope_wipo_int_list_{self.target_year}{i}.csv'
+            week_num = f'{self.target_year}{i}'
+            input_f_name = f'patentscope_wipo_int_list_{week_num}.csv'
             input_f_path = os.path.join(OUTPUT_LIST_DIR, input_f_name)
 
-            week_num = f'{self.target_year}{i}'
             items = read_file(input_f_path)
             output_items = []
             failed_items = []
@@ -131,13 +131,13 @@ class PatentScopeWipoSpider(scrapy.Spider):
 
                     output_item = self.transform_item(raw_output_item)
                     output_items.append(output_item)
-                    print(f'Success - Index: {index + 1} - DocumentID: {original_doc_id} - URL: {request_url}')
-                    self.logger.info(f'Success - Index: {index + 1} - DocumentID: {original_doc_id} - URL: {request_url}')
+                    print(f'Success - Index: {index + 1} - InputFile: {week_num} - URL: {request_url}')
+                    self.logger.info(f'Success - Index: {index + 1} - InputFile: {week_num} - URL: {request_url}')
                 except Exception as e:
                     failed_items.append(item)
-                    print(f'Failed - Index: {index + 1} - DocumentID: {original_doc_id} - URL: {request_url}')
+                    print(f'Failed - Index: {index + 1} - InputFile: {week_num} - URL: {request_url}')
                     print(f'Exception - {str(e)}')
-                    self.logger.info(f'Failed - Index: {index + 1} - DocumentID: {original_doc_id} - URL: {request_url}')
+                    self.logger.info(f'Failed - Index: {index + 1} - InputFile: {week_num} - URL: {request_url}')
                     self.logger.info(f'Exception - {str(e)}')
 
             write_results_to_csv(self.feed_uri, output_items)
