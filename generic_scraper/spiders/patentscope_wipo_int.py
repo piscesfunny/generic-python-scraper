@@ -103,8 +103,8 @@ class PatentScopeWipoSpider(scrapy.Spider):
                 doc_id = original_doc_id.replace('/', '')
                 request_url = f'{self.base_url}/search/en/detail.jsf?docId={doc_id}&_gid={week_num}'
                 if request_url in succeeded_urls:
-                    print(f'Skipped - URL: {request_url}')
-                    self.logger.info(f'Skipped - URL: {request_url}')
+                    print(f'Skipped - Index: {count}/{num_of_items} - URL: {request_url}')
+                    self.logger.info(f'Skipped - Index: {count}/{num_of_items} - URL: {request_url}')
                     continue
                 try:
                     res = requests.get(url=request_url, headers=headers)
@@ -146,11 +146,7 @@ class PatentScopeWipoSpider(scrapy.Spider):
                     success_urls.append(request_url)
                     print(f'Success - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
                     self.logger.info(f'Success - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
-                    if count % 100 == 0 or count == num_of_items:
-                        write_results_to_csv(self.feed_uri, output_items)
-                        write_results_to_txt(success_f_path, success_urls, f_open_mode='a')
-                        output_items = []
-                        success_urls = []
+
                 except Exception as e:
                     failed_items.append(item)
                     failed_urls.append(request_url)
@@ -158,6 +154,13 @@ class PatentScopeWipoSpider(scrapy.Spider):
                     print(f'Exception - {str(e)}')
                     self.logger.info(f'Failed - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
                     self.logger.info(f'Exception - {str(e)}')
+
+                n_output_items = len(output_items)
+                if (n_output_items > 0 and n_output_items % 100 == 0) or count == num_of_items:
+                    write_results_to_csv(self.feed_uri, output_items)
+                    write_results_to_txt(success_f_path, success_urls, f_open_mode='a')
+                    output_items = []
+                    success_urls = []
 
             if failed_items:
                 write_results_to_csv(os.path.join(OUTPUT_FAILED_DIR, input_f_name), failed_items, rewrite_mode=True)
