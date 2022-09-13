@@ -118,12 +118,15 @@ def validate_parameter(argv, parameter_count=1):
         exit(1)
 
 
-def write_results_to_csv(output_f_path, items, encoding='utf-8-sig'):
+def write_results_to_csv(output_f_path, items, encoding='utf-8-sig', rewrite_mode=False):
     df = pd.DataFrame(items)
-    if os.path.exists(output_f_path):
-        df.to_csv(output_f_path, mode='a', header=False, index=False, encoding=encoding)
-    else:
+    if rewrite_mode:
         df.to_csv(output_f_path, index=False, encoding=encoding)
+    else:
+        if os.path.exists(output_f_path):
+            df.to_csv(output_f_path, mode='a', header=False, index=False, encoding=encoding)
+        else:
+            df.to_csv(output_f_path, index=False, encoding=encoding)
 
 
 def read_file(f_path, file_format='csv'):
