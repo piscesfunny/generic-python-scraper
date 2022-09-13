@@ -90,6 +90,8 @@ class PatentScopeWipoSpider(scrapy.Spider):
             output_items = []
             failed_items = []
             for index, item in enumerate(items):
+                num_of_items = len(items)
+                count = index + 1
                 original_doc_id = item.get('ID')
                 title = item.get('Title')
                 doc_id = original_doc_id.replace('/', '')
@@ -131,16 +133,18 @@ class PatentScopeWipoSpider(scrapy.Spider):
 
                     output_item = self.transform_item(raw_output_item)
                     output_items.append(output_item)
-                    print(f'Success - Index: {index + 1} - InputFile: {week_num} - URL: {request_url}')
-                    self.logger.info(f'Success - Index: {index + 1} - InputFile: {week_num} - URL: {request_url}')
+                    print(f'Success - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
+                    self.logger.info(f'Success - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
+                    if count % 100 == 0 or count == num_of_items:
+                        write_results_to_csv(self.feed_uri, output_items)
+                        output_items = []
                 except Exception as e:
                     failed_items.append(item)
-                    print(f'Failed - Index: {index + 1} - InputFile: {week_num} - URL: {request_url}')
+                    print(f'Failed - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
                     print(f'Exception - {str(e)}')
-                    self.logger.info(f'Failed - Index: {index + 1} - InputFile: {week_num} - URL: {request_url}')
+                    self.logger.info(f'Failed - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
                     self.logger.info(f'Exception - {str(e)}')
 
-            write_results_to_csv(self.feed_uri, output_items)
             if failed_items:
                 write_results_to_csv(os.path.join(OUTPUT_FAILED_DIR, input_f_name), failed_items, rewrite_mode=True)
 
