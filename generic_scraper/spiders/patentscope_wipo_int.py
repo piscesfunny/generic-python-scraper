@@ -9,9 +9,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.wait import WebDriverWait
 
-from utils.config import OUTPUT_LIST_DIR, OUTPUT_FAILED_DIR
+from utils.config import OUTPUT_LIST_DIR, OUTPUT_FAILED_DIR, OUTPUT_STATUS_DIR
 from utils.constants import *
-from utils.helpers import initialize_chrome_driver, write_results_to_csv, read_file
+from utils.helpers import initialize_chrome_driver, write_results_to_csv, read_file, write_results_to_txt
 from utils.logging import ScraperLogger
 
 
@@ -85,10 +85,16 @@ class PatentScopeWipoSpider(scrapy.Spider):
             week_num = f'{self.target_year}{i}'
             input_f_name = f'patentscope_wipo_int_list_{week_num}.csv'
             input_f_path = os.path.join(OUTPUT_LIST_DIR, input_f_name)
+            failed_f_path = os.path.join(OUTPUT_STATUS_DIR, f'patentscope_wipo_int_list_{week_num}_failed.txt')
+            success_f_path = os.path.join(OUTPUT_STATUS_DIR, f'patentscope_wipo_int_list_{week_num}_success.txt')
 
             items = read_file(input_f_path)
+            succeeded_urls = read_file(success_f_path, file_format='txt')
+
             output_items = []
             failed_items = []
+            success_urls = []
+            failed_urls = []
             for index, item in enumerate(items):
                 num_of_items = len(items)
                 count = index + 1
@@ -96,6 +102,10 @@ class PatentScopeWipoSpider(scrapy.Spider):
                 title = item.get('Title')
                 doc_id = original_doc_id.replace('/', '')
                 request_url = f'{self.base_url}/search/en/detail.jsf?docId={doc_id}&_gid={week_num}'
+                if request_url in succeeded_urls:
+                    print(f'Skipped - URL: {request_url}')
+                    self.logger.info(f'Skipped - URL: {request_url}')
+                    continue
                 try:
                     res = requests.get(url=request_url, headers=headers)
                     time.sleep(1)
@@ -133,13 +143,17 @@ class PatentScopeWipoSpider(scrapy.Spider):
 
                     output_item = self.transform_item(raw_output_item)
                     output_items.append(output_item)
+                    success_urls.append(request_url)
                     print(f'Success - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
                     self.logger.info(f'Success - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
                     if count % 100 == 0 or count == num_of_items:
                         write_results_to_csv(self.feed_uri, output_items)
+                        write_results_to_txt(success_f_path, success_urls, f_open_mode='a')
                         output_items = []
+                        success_urls = []
                 except Exception as e:
                     failed_items.append(item)
+                    failed_urls.append(request_url)
                     print(f'Failed - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
                     print(f'Exception - {str(e)}')
                     self.logger.info(f'Failed - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
@@ -147,6 +161,7 @@ class PatentScopeWipoSpider(scrapy.Spider):
 
             if failed_items:
                 write_results_to_csv(os.path.join(OUTPUT_FAILED_DIR, input_f_name), failed_items, rewrite_mode=True)
+                write_results_to_txt(failed_f_path, failed_urls)
 
     @staticmethod
     def transform_item(raw_item):
