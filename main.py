@@ -19,8 +19,7 @@ from apps.sweets_construction import start_scrapper as sweets_construction_start
 from apps.scitechdaily import start_scrapper as scitechdaily_start_scrapper
 from apps.parts_cat import start_scrapper as parts_cat_start_scrapper
 from apps.general_kinematics import start_scrapper as general_kinematics_start_scrapper
-from apps.online_epocrates import start_scrapper as online_epocrates_start_scrapper
-from apps.navi_cnki_net import start_scrapper as navi_cnki_net_start_scrapper
+
 from apps.patentscope_wipo_int import start_scrapper as pwi_start_scrapper
 from utils.config import *
 from utils.constants import *
@@ -34,6 +33,8 @@ if __name__ == '__main__':
     os.makedirs(OUTPUT_RESULT_DIR, exist_ok=True)
     os.makedirs(OUTPUT_MEDIA_URL_LIST_DIR, exist_ok=True)
     os.makedirs(OUTPUT_FAILED_DIR, exist_ok=True)
+    os.makedirs(OUTPUT_STATUS_DIR, exist_ok=True)
+    os.makedirs(OUTPUT_TEMP_DIR, exist_ok=True)
 
     os.makedirs(OUTPUT_MEDIA_DIR, exist_ok=True)
 
@@ -196,6 +197,7 @@ if __name__ == '__main__':
         else:
             pass
     if sys.argv[1] == 'online_epocrates':
+        from apps.online_epocrates import start_scrapper as online_epocrates_start_scrapper
         logger.info(f'{sys.argv[1]}.com spider started')
         online_epocrates_start_scrapper(
             site_name=sys.argv[1],
@@ -204,6 +206,7 @@ if __name__ == '__main__':
             scraping_target=sys.argv[4]
         )
     if sys.argv[1] == 'navi_cnki_net':
+        from apps.navi_cnki_net import start_scrapper as navi_cnki_net_start_scrapper
         logger.info(f'{sys.argv[1]}.com spider started')
         navi_cnki_net_start_scrapper(
             site_name=sys.argv[1],
