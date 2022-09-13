@@ -113,14 +113,26 @@ class PatentScopeWipoSpider(scrapy.Spider):
                     scrapy_selector = Selector(text=res.text)
 
                     main_data_elems_css = '.ps-biblio-data--biblio-card > div'
+                    n_main_data_elems = len(scrapy_selector.css(main_data_elems_css))
+
                     publication_number = scrapy_selector.css(main_data_elems_css)[0].css('span')[1].css('::text').get()
                     publication_date = scrapy_selector.css(main_data_elems_css)[1].css('span')[1].css('::text').get()
                     application_number = scrapy_selector.css(main_data_elems_css)[2].css('span')[1].css('::text').get()
-                    applicants = scrapy_selector.css(main_data_elems_css)[6].css('span li span::text').getall()
-                    inventors = scrapy_selector.css(main_data_elems_css)[7].css('span li span::text').getall()
-                    agents = scrapy_selector.css(main_data_elems_css)[8].css('span li span::text').getall()
-                    priority_data = scrapy_selector.css(main_data_elems_css)[9].css('span tr *::text').getall()
-                    publication_language = scrapy_selector.css(main_data_elems_css)[10].css('span')[1].css('::text').get()
+
+                    idx = 6
+                    test_applicants = scrapy_selector.css(main_data_elems_css)[idx].css(
+                        'span li span::text').getall() if n_main_data_elems > idx else []
+                    if not test_applicants:
+                        idx = 4
+
+                    applicants, inventors, agents, priority_data, publication_language = self.get_main_body_data(
+                        scrapy_selector, main_data_elems_css, n_main_data_elems, idx)
+
+                    if not priority_data:
+                        idx -= 1
+                        _, _, _, priority_data, publication_language = self.get_main_body_data(
+                            scrapy_selector, main_data_elems_css, n_main_data_elems, idx)
+
                     detailed_title = scrapy_selector.css('.PCTtitle').get()
                     abstract = scrapy_selector.css('.patent-abstract').get()
 
@@ -145,26 +157,42 @@ class PatentScopeWipoSpider(scrapy.Spider):
                     output_items.append(output_item)
                     success_urls.append(request_url)
                     print(f'Success - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
-                    self.logger.info(f'Success - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
+                    self.logger.info(
+                        f'Success - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
 
                 except Exception as e:
                     failed_items.append(item)
                     failed_urls.append(request_url)
                     print(f'Failed - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
                     print(f'Exception - {str(e)}')
-                    self.logger.info(f'Failed - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
+                    self.logger.info(
+                        f'Failed - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
                     self.logger.info(f'Exception - {str(e)}')
 
                 n_output_items = len(output_items)
-                if (n_output_items > 0 and n_output_items % 100 == 0) or count == num_of_items:
-                    write_results_to_csv(self.feed_uri, output_items)
-                    write_results_to_txt(success_f_path, success_urls, f_open_mode='a')
+                if n_output_items > 0 and n_output_items % 100 == 0:
+                    self.write_success_result(self.feed_uri, output_items, success_f_path, success_urls)
                     output_items = []
                     success_urls = []
 
-            if failed_items:
-                write_results_to_csv(os.path.join(OUTPUT_FAILED_DIR, input_f_name), failed_items, rewrite_mode=True)
-                write_results_to_txt(failed_f_path, failed_urls)
+            self.write_success_result(self.feed_uri, output_items, success_f_path, success_urls)
+            write_results_to_csv(os.path.join(OUTPUT_FAILED_DIR, input_f_name), failed_items, rewrite_mode=True)
+            write_results_to_txt(failed_f_path, failed_urls)
+
+    @staticmethod
+    def get_main_body_data(scrapy_selector, main_data_elems_css, n_main_data_elems, idx):
+        applicants = scrapy_selector.css(main_data_elems_css)[idx].css(
+            'span li span::text').getall() if n_main_data_elems > idx else []
+        inventors = scrapy_selector.css(main_data_elems_css)[idx + 1].css(
+            'span li span::text').getall() if n_main_data_elems > idx + 1 else []
+        agents = scrapy_selector.css(main_data_elems_css)[idx + 2].css(
+            'span li span::text').getall() if n_main_data_elems > idx + 2 else []
+        priority_data = scrapy_selector.css(main_data_elems_css)[idx + 3].css(
+            'span tr *::text').getall() if n_main_data_elems > idx + 3 else []
+        publication_language = scrapy_selector.css(main_data_elems_css)[idx + 4].css('span')[1].css(
+            '::text').get() if n_main_data_elems > idx + 4 else ''
+
+        return applicants, inventors, agents, priority_data, publication_language
 
     @staticmethod
     def transform_item(raw_item):
@@ -178,3 +206,8 @@ class PatentScopeWipoSpider(scrapy.Spider):
             else:
                 item[k] = v.strip() if v else v
         return item
+
+    @staticmethod
+    def write_success_result(feed_uri, output_items, success_f_path, success_urls):
+        write_results_to_csv(feed_uri, output_items)
+        write_results_to_txt(success_f_path, success_urls, f_open_mode='a')
