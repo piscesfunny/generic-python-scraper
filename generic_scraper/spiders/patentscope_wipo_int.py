@@ -47,14 +47,6 @@ class PatentScopeWipoSpider(scrapy.Spider):
         self.feed_uri = param['feed_uri']
 
     def start_requests(self):
-        for url in self.start_urls:
-            yield scrapy.Request(
-                url=url, callback=self.parse, headers=self.default_headers)
-
-    def parse(self, response):
-        headers = self.default_headers
-        headers['referer'] = response.request.url
-
         if self.scraping_target == SCRAPPING_TARGET_LIST:
             driver = initialize_chrome_driver()
             category_url = 'https://patentscope.wipo.int/search/en/resultWeeklyBrowse.jsf'
@@ -81,110 +73,82 @@ class PatentScopeWipoSpider(scrapy.Spider):
                 WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, excel_download_elem_id)))
                 driver.find_element_by_id(excel_download_elem_id).click()
                 time.sleep(5)
-
-                # page_num = 0
-                # while True:
-                #     page_num += 1
-                #     scrapy_selector = Selector(text=driver.page_source)
-                #     item_elems = scrapy_selector.css('tr.ui-widget-content')
-                #     items = []
-                #     for item_elem in item_elems:
-                #         item_url = self.base_url + item_elem.css('td a.detail-link::attr(href)').get()
-                #         doc_id = extract_substr_between_two_marks(text=item_url, mark1='docId=', mark2='&_gid')
-                #         items.append({
-                #             'year': self.target_year,
-                #             'week': week_data,
-                #             'doc_id': doc_id,
-                #             'item_url': item_url
-                #         })
-                #
-                #     write_results_to_csv(self.result_list_suc_f_path, items)
-                #
-                #     self.logger.info(f'Get list - category: {self.target_year} - item count: {len(items)} - page: {page_num}')
-                #     print(f'Get list - category: {self.target_year} - item count: {len(items)} - page: {page_num}')
-                #
-                #     next_page_elems_disabled = scrapy_selector.css('a.ui-paginator-next.ui-state-disabled')
-                #     if len(next_page_elems_disabled) > 0:
-                #         break
-                #     else:
-                #         elem_cls = 'a.ui-paginator-next'
-                #         WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.CSS_SELECTOR, elem_cls)))
-                #         driver.find_element_by_css_selector(elem_cls).click()
-                #         time.sleep(3)
         else:
-            # driver = initialize_chrome_driver()
-            for f in os.listdir(OUTPUT_LIST_DIR):
-                target_files = []
-                for i in range(self.target_start_week, self.target_end_week + 1):
-                    target_files.append(f'patentscope_wipo_int_list_{self.target_year}{i}.csv')
 
-                if f not in target_files:
-                    continue
+            for url in self.start_urls:
+                yield scrapy.Request(
+                    url=url, callback=self.parse, headers=self.default_headers)
 
-                input_f_path = os.path.join(OUTPUT_LIST_DIR, f)
-                week_num = extract_substr_between_two_marks(f, 'list_', '.csv')
-                items = read_file(input_f_path)
-                success_items = []
-                failed_items = []
-                for index, item in enumerate(items):
-                    original_doc_id = item.get('ID')
-                    title = item.get('Title')
-                    if not original_doc_id:
-                        continue
-                    doc_id = original_doc_id.replace('/', '')
-                    request_url = f'{self.base_url}/search/en/detail.jsf?docId={doc_id}&_gid={week_num}'
-                    try:
-                        res = requests.get(url=request_url, headers=headers)
-                        # driver.get(request_url)
-                        time.sleep(2)
+    def parse(self, response):
+        headers = self.default_headers
+        headers['referer'] = response.request.url
 
-                        # scrapy_selector = Selector(text=driver.page_source)
-                        scrapy_selector = Selector(text=res.text)
+        # driver = initialize_chrome_driver()
+        for i in range(self.target_start_week, self.target_end_week + 1):
+            input_f_name = f'patentscope_wipo_int_list_{self.target_year}{i}.csv'
+            input_f_path = os.path.join(OUTPUT_LIST_DIR, input_f_name)
+            week_num = f'{self.target_year}{i}'
+            items = read_file(input_f_path)
+            success_items = []
+            failed_items = []
+            for index, item in enumerate(items):
+                original_doc_id = item.get('ID')
+                title = item.get('Title')
+                doc_id = original_doc_id.replace('/', '')
+                request_url = f'{self.base_url}/search/en/detail.jsf?docId={doc_id}&_gid={week_num}'
+                try:
+                    res = requests.get(url=request_url, headers=headers)
+                    # driver.get(request_url)
+                    time.sleep(1)
 
-                        main_data_elems_css = '.ps-biblio-data--biblio-card > div'
-                        publication_number = scrapy_selector.css(main_data_elems_css)[0].css('span')[1].css('::text').get()
-                        publication_date = scrapy_selector.css(main_data_elems_css)[1].css('span')[1].css('::text').get()
-                        application_number = scrapy_selector.css(main_data_elems_css)[2].css('span')[1].css('::text').get()
+                    # scrapy_selector = Selector(text=driver.page_source)
+                    scrapy_selector = Selector(text=res.text)
 
-                        applicant_list = scrapy_selector.css(main_data_elems_css)[6].css('span li span::text').getall()
-                        applicants = ' ||| '.join(applicant_list)
-                        inventor_list = scrapy_selector.css(main_data_elems_css)[7].css('span li span::text').getall()
-                        inventors = ' ||| '.join(inventor_list)
-                        agent_list = scrapy_selector.css(main_data_elems_css)[8].css('span li span::text').getall()
-                        agents = ' ||| '.join(agent_list)
-                        priority_data_list = scrapy_selector.css(main_data_elems_css)[9].css('span tr *::text').getall()
-                        priority_data = ' ||| '.join(priority_data_list)
-                        publication_language = scrapy_selector.css(main_data_elems_css)[10].css('span')[1].css('::text').get()
+                    main_data_elems_css = '.ps-biblio-data--biblio-card > div'
+                    publication_number = scrapy_selector.css(main_data_elems_css)[0].css('span')[1].css('::text').get()
+                    publication_date = scrapy_selector.css(main_data_elems_css)[1].css('span')[1].css('::text').get()
+                    application_number = scrapy_selector.css(main_data_elems_css)[2].css('span')[1].css('::text').get()
 
-                        detailed_title = scrapy_selector.css('.PCTtitle').get()
-                        abstract = scrapy_selector.css('.patent-abstract').get()
+                    applicant_list = scrapy_selector.css(main_data_elems_css)[6].css('span li span::text').getall()
+                    applicants = ' ||| '.join(applicant_list)
+                    inventor_list = scrapy_selector.css(main_data_elems_css)[7].css('span li span::text').getall()
+                    inventors = ' ||| '.join(inventor_list)
+                    agent_list = scrapy_selector.css(main_data_elems_css)[8].css('span li span::text').getall()
+                    agents = ' ||| '.join(agent_list)
+                    priority_data_list = scrapy_selector.css(main_data_elems_css)[9].css('span tr *::text').getall()
+                    priority_data = ' ||| '.join(priority_data_list)
+                    publication_language = scrapy_selector.css(main_data_elems_css)[10].css('span')[1].css('::text').get()
 
-                        item = {
-                            'week_number': week_num,
-                            'title': title,
-                            'publication_number': publication_number.strip(),
-                            'publication_date': publication_date.strip(),
-                            'application_number': application_number.strip(),
-                            'applicants': applicants.strip(),
-                            'inventors': inventors.strip(),
-                            'agents': agents.strip(),
-                            'priority_data': priority_data.strip(),
-                            'publication_language': publication_language.strip(),
-                            'detailed_title': detailed_title.strip(),
-                            'abstract': abstract.strip(),
-                            'item_url': request_url,
-                            'website': self.base_url
-                        }
+                    detailed_title = scrapy_selector.css('.PCTtitle').get()
+                    abstract = scrapy_selector.css('.patent-abstract').get()
 
-                        success_items.append(item)
-                        print(f'Success - Index: {index + 1} - DocumentID: {original_doc_id}')
-                        self.logger.info(f'Success - Index: {index + 1} - DocumentID: {original_doc_id}')
-                    except Exception as e:
-                        failed_items.append(item)
-                        print(f'Failed - Index: {index + 1} - DocumentID: {original_doc_id}')
-                        self.logger.info(f'Failed - Index: {index + 1} - DocumentID: {original_doc_id}')
+                    item = {
+                        'week_number': week_num,
+                        'title': title,
+                        'publication_number': publication_number.strip(),
+                        'publication_date': publication_date.strip(),
+                        'application_number': application_number.strip(),
+                        'applicants': applicants.strip(),
+                        'inventors': inventors.strip(),
+                        'agents': agents.strip(),
+                        'priority_data': priority_data.strip(),
+                        'publication_language': publication_language.strip(),
+                        'detailed_title': detailed_title.strip(),
+                        'abstract': abstract.strip(),
+                        'item_url': request_url,
+                        'website': self.base_url
+                    }
 
-                write_results_to_csv(self.feed_uri, success_items)
-                if failed_items:
-                    write_results_to_csv(os.path.join(OUTPUT_FAILED_DIR, f), failed_items)
-            pass
+                    success_items.append(item)
+                    print(f'Success - Index: {index + 1} - DocumentID: {original_doc_id} - URL: {request_url}')
+                    self.logger.info(f'Success - Index: {index + 1} - DocumentID: {original_doc_id} - URL: {request_url}')
+                except Exception as e:
+                    failed_items.append(item)
+                    print(f'Failed - Index: {index + 1} - DocumentID: {original_doc_id} - URL: {request_url}')
+                    print(f'Exception - {str(e)}')
+                    self.logger.info(f'Failed - Index: {index + 1} - DocumentID: {original_doc_id} - URL: {request_url}')
+                    self.logger.info(f'Exception - {str(e)}')
+
+            write_results_to_csv(self.feed_uri, success_items)
+            if failed_items:
+                write_results_to_csv(os.path.join(OUTPUT_FAILED_DIR, input_f_name), failed_items)
