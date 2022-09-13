@@ -108,37 +108,32 @@ class PatentScopeWipoSpider(scrapy.Spider):
                     publication_number = scrapy_selector.css(main_data_elems_css)[0].css('span')[1].css('::text').get()
                     publication_date = scrapy_selector.css(main_data_elems_css)[1].css('span')[1].css('::text').get()
                     application_number = scrapy_selector.css(main_data_elems_css)[2].css('span')[1].css('::text').get()
-
-                    applicant_list = scrapy_selector.css(main_data_elems_css)[6].css('span li span::text').getall()
-                    applicants = ' ||| '.join(applicant_list)
-                    inventor_list = scrapy_selector.css(main_data_elems_css)[7].css('span li span::text').getall()
-                    inventors = ' ||| '.join(inventor_list)
-                    agent_list = scrapy_selector.css(main_data_elems_css)[8].css('span li span::text').getall()
-                    agents = ' ||| '.join(agent_list)
-                    priority_data_list = scrapy_selector.css(main_data_elems_css)[9].css('span tr *::text').getall()
-                    priority_data = ' ||| '.join(priority_data_list)
+                    applicants = scrapy_selector.css(main_data_elems_css)[6].css('span li span::text').getall()
+                    inventors = scrapy_selector.css(main_data_elems_css)[7].css('span li span::text').getall()
+                    agents = scrapy_selector.css(main_data_elems_css)[8].css('span li span::text').getall()
+                    priority_data = scrapy_selector.css(main_data_elems_css)[9].css('span tr *::text').getall()
                     publication_language = scrapy_selector.css(main_data_elems_css)[10].css('span')[1].css('::text').get()
-
                     detailed_title = scrapy_selector.css('.PCTtitle').get()
                     abstract = scrapy_selector.css('.patent-abstract').get()
 
-                    item = {
+                    raw_item = {
                         'week_number': week_num,
                         'title': title,
-                        'publication_number': publication_number.strip(),
-                        'publication_date': publication_date.strip(),
-                        'application_number': application_number.strip(),
-                        'applicants': applicants.strip(),
-                        'inventors': inventors.strip(),
-                        'agents': agents.strip(),
-                        'priority_data': priority_data.strip(),
-                        'publication_language': publication_language.strip(),
-                        'detailed_title': detailed_title.strip(),
-                        'abstract': abstract.strip(),
+                        'publication_number': publication_number,
+                        'publication_date': publication_date,
+                        'application_number': application_number,
+                        'applicants': applicants,
+                        'inventors': inventors,
+                        'agents': agents,
+                        'priority_data': priority_data,
+                        'publication_language': publication_language,
+                        'detailed_title': detailed_title,
+                        'abstract': abstract,
                         'item_url': request_url,
                         'website': self.base_url
                     }
 
+                    item = self.transform_item(raw_item)
                     success_items.append(item)
                     print(f'Success - Index: {index + 1} - DocumentID: {original_doc_id} - URL: {request_url}')
                     self.logger.info(f'Success - Index: {index + 1} - DocumentID: {original_doc_id} - URL: {request_url}')
@@ -152,3 +147,16 @@ class PatentScopeWipoSpider(scrapy.Spider):
             write_results_to_csv(self.feed_uri, success_items)
             if failed_items:
                 write_results_to_csv(os.path.join(OUTPUT_FAILED_DIR, input_f_name), failed_items)
+
+    @staticmethod
+    def transform_item(raw_item):
+        item = {}
+        list_item_keys = ['applicants', 'inventors', 'agents', 'priority_data']
+        delimiter = ' ||| '
+        for k, v in raw_item.items():
+            if k in list_item_keys:
+                filtered_item = [elem.strip() for elem in v]
+                item[k] = delimiter.join(filtered_item)
+            else:
+                item[k] = v.strip() if v else v
+        return item
