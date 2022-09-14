@@ -82,7 +82,11 @@ class PatentScopeWipoSpider(scrapy.Spider):
         headers['referer'] = response.request.url
 
         for i in range(self.target_start_week, self.target_end_week + 1):
-            week_num = f'{self.target_year}{i}'
+            if i < 10:
+                week_num = f'{self.target_year}0{i}'
+            else:
+                week_num = f'{self.target_year}{i}'
+
             input_f_name = f'patentscope_wipo_int_list_{week_num}.csv'
             input_f_path = os.path.join(OUTPUT_LIST_DIR, input_f_name)
             failed_f_path = os.path.join(OUTPUT_STATUS_DIR, f'patentscope_wipo_int_list_{week_num}_failed.txt')
