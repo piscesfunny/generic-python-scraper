@@ -107,8 +107,8 @@ class PatentScopeWipoSpider(scrapy.Spider):
                     self.logger.info(f'Skipped - Index: {count}/{num_of_items} - URL: {request_url}')
                     continue
                 try:
+                    time.sleep(10)
                     res = requests.get(url=request_url, headers=headers)
-                    time.sleep(1)
 
                     scrapy_selector = Selector(text=res.text)
 
@@ -175,7 +175,6 @@ class PatentScopeWipoSpider(scrapy.Spider):
                     success_urls = []
                     self.logger.info(f'Writing result - Index: {count}/{num_of_items}')
                     print(f'Writing result - Index: {count}/{num_of_items}')
-                    time.sleep(60)
 
             self.write_success_result(self.feed_uri, output_items, success_f_path, success_urls)
             write_results_to_csv(os.path.join(OUTPUT_FAILED_DIR, input_f_name), failed_items, rewrite_mode=True)
