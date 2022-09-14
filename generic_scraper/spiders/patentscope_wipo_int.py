@@ -115,23 +115,22 @@ class PatentScopeWipoSpider(scrapy.Spider):
                     main_data_elems_css = '.ps-biblio-data--biblio-card > div'
                     n_main_data_elems = len(scrapy_selector.css(main_data_elems_css))
 
-                    publication_number = scrapy_selector.css(main_data_elems_css)[0].css('span')[1].css('::text').get()
-                    publication_date = scrapy_selector.css(main_data_elems_css)[1].css('span')[1].css('::text').get()
-                    application_number = scrapy_selector.css(main_data_elems_css)[2].css('span')[1].css('::text').get()
+                    publication_number = scrapy_selector.css(main_data_elems_css)[0].css('span:last-child::text').get()
+                    publication_date = scrapy_selector.css(main_data_elems_css)[1].css('span:last-child::text').get()
+                    application_number = scrapy_selector.css(main_data_elems_css)[2].css('span:last-child::text').get()
 
                     idx = 6
                     test_applicants = scrapy_selector.css(main_data_elems_css)[idx].css(
                         'span li span::text').getall() if n_main_data_elems > idx else []
                     if not test_applicants:
                         idx = 4
+                    test_applicants = scrapy_selector.css(main_data_elems_css)[idx].css(
+                        'span li span::text').getall() if n_main_data_elems > idx else []
+                    if not test_applicants:
+                        idx = 7
 
                     applicants, inventors, agents, priority_data, publication_language = self.get_main_body_data(
                         scrapy_selector, main_data_elems_css, n_main_data_elems, idx)
-
-                    if not priority_data:
-                        idx -= 1
-                        _, _, _, priority_data, publication_language = self.get_main_body_data(
-                            scrapy_selector, main_data_elems_css, n_main_data_elems, idx)
 
                     detailed_title = scrapy_selector.css('.PCTtitle').get()
                     abstract = scrapy_selector.css('.patent-abstract').get()
@@ -174,6 +173,9 @@ class PatentScopeWipoSpider(scrapy.Spider):
                     self.write_success_result(self.feed_uri, output_items, success_f_path, success_urls)
                     output_items = []
                     success_urls = []
+                    self.logger.info(f'Writing result - Index: {count}/{num_of_items}')
+                    print(f'Writing result - Index: {count}/{num_of_items}')
+                    time.sleep(60)
 
             self.write_success_result(self.feed_uri, output_items, success_f_path, success_urls)
             write_results_to_csv(os.path.join(OUTPUT_FAILED_DIR, input_f_name), failed_items, rewrite_mode=True)
@@ -189,8 +191,8 @@ class PatentScopeWipoSpider(scrapy.Spider):
             'span li span::text').getall() if n_main_data_elems > idx + 2 else []
         priority_data = scrapy_selector.css(main_data_elems_css)[idx + 3].css(
             'span tr *::text').getall() if n_main_data_elems > idx + 3 else []
-        publication_language = scrapy_selector.css(main_data_elems_css)[idx + 4].css('span')[1].css(
-            '::text').get() if n_main_data_elems > idx + 4 else ''
+        publication_language = scrapy_selector.css(main_data_elems_css)[idx + 4].css(
+            'span:last-child::text').get() if n_main_data_elems > idx + 4 else ''
 
         return applicants, inventors, agents, priority_data, publication_language
 
