@@ -7,3 +7,4 @@ requests~=2.25.1
 scraperapi-sdk==0.2.2
 PyAutoGUI~=0.9.53
 pandas~=1.5.0
+pypyodbc~=1.3.6
