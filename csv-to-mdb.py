@@ -1,5 +1,6 @@
 import os
 import pypyodbc
+import pyodbc
 from utils.config import BASE_DIR, OUTPUT_RESULT_DIR
 
 
@@ -13,10 +14,13 @@ for f in os.listdir(OUTPUT_RESULT_DIR):
 
     # DATABASE CONNECTION
     connection_str = "DRIVER={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={};".format(db_f_path)
-    con = pypyodbc.connect(connection_str)
+    con = pyodbc.connect(connection_str, ansi=True)
+    con.setdecoding(pyodbc.SQL_CHAR, encoding='iso-8859-1')
+    con.setdecoding(pyodbc.SQL_WCHAR, encoding='iso-8859-1')
+    con.setencoding(encoding='iso-8859-1')
 
     # RUN QUERY
-    strSQL = f"SELECT * INTO [TableName] FROM [text;HDR=Yes;FMT=Delimited(,);Database={OUTPUT_RESULT_DIR}].{f};"
+    strSQL = f"SELECT * INTO [patentscope] FROM [text;HDR=Yes;FMT=Delimited(,);Database={OUTPUT_RESULT_DIR}].{f};"
     cur = con.cursor()
     cur.execute(strSQL)
     con.commit()
