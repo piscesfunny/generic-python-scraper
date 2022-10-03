@@ -1,6 +1,7 @@
 import json
 import os
 import platform
+import re
 import time
 import pandas as pd
 import wget
@@ -117,12 +118,15 @@ def validate_parameter(argv, parameter_count=1):
         exit(1)
 
 
-def write_results_to_csv(output_f_path, items):
+def write_results_to_csv(output_f_path, items, encoding='utf-8-sig', rewrite_mode=False):
     df = pd.DataFrame(items)
-    if os.path.exists(output_f_path):
-        df.to_csv(output_f_path, mode='a', header=False, index=False)
+    if rewrite_mode:
+        df.to_csv(output_f_path, index=False, encoding=encoding)
     else:
-        df.to_csv(output_f_path, index=False)
+        if os.path.exists(output_f_path):
+            df.to_csv(output_f_path, mode='a', header=False, index=False, encoding=encoding)
+        else:
+            df.to_csv(output_f_path, index=False, encoding=encoding)
 
 
 def read_file(f_path, file_format='csv'):
@@ -160,3 +164,8 @@ def download_image_by_wget(url_list, output_dir, failed_file_path):
         with open(failed_file_path, "a") as f:
             for url in failed_urls:
                 f.write(f'{url}\n')
+
+
+def extract_substr_between_two_marks(text, mark1, mark2):
+    m = re.search(f'{mark1}(.+?){mark2}', text)
+    return m.group(1) if m else None
