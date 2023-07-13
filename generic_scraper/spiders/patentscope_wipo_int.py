@@ -1,7 +1,7 @@
 import os
 import time
+from datetime import datetime
 
-import requests
 import scrapy
 from scrapy.selector import Selector
 from selenium.webdriver.common.by import By
@@ -9,9 +9,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.wait import WebDriverWait
 
-from utils.config import OUTPUT_LIST_DIR, OUTPUT_FAILED_DIR, OUTPUT_STATUS_DIR
+from utils.config import OUTPUT_LIST_DIR, OUTPUT_STATUS_DIR
 from utils.constants import *
-from utils.helpers import initialize_chrome_driver, write_results_to_csv, read_file, write_results_to_txt
+from utils.helpers import initialize_chrome_driver, read_file, write_results_to_txt
 from utils.logging import ScraperLogger
 
 
@@ -30,8 +30,7 @@ class PatentScopeWipoSpider(scrapy.Spider):
         self.logger = ScraperLogger(label='SPIDER', log_file=f'{self.name}.log').logger
 
         self.default_headers = {
-            'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
-                          ' Chrome/74.0.3729.131 Safari/537.36'
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
         }
 
         self.action_type = param['action_type']
@@ -43,6 +42,8 @@ class PatentScopeWipoSpider(scrapy.Spider):
         self.result_list_suc_f_path = param['result_list_suc_f_path']
         self.result_list_err_f_path = param['result_list_err_f_path']
         self.feed_uri = param['feed_uri']
+
+        self.min_date = datetime.strptime("01.08.2022", "%d.%m.%Y")
 
     def start_requests(self):
         if self.scraping_target == SCRAPPING_TARGET_LIST:
@@ -67,152 +68,71 @@ class PatentScopeWipoSpider(scrapy.Spider):
                 self.logger.info(f"111 - {i}: {week_data}")
                 print(f"111 - {i}: {week_data}")
 
-                excel_download_elem_id = 'weeklyPublicationForm:j_idt1221'
+                excel_download_elem_id = 'weeklyPublicationForm:j_idt1240'
                 WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, excel_download_elem_id)))
                 driver.find_element_by_id(excel_download_elem_id).click()
                 time.sleep(5)
         else:
+            driver = initialize_chrome_driver()
+            for i in range(self.target_start_week, self.target_end_week + 1):
+                if i < 10:
+                    week_num = f'{self.target_year}0{i}'
+                else:
+                    week_num = f'{self.target_year}{i}'
 
-            for url in self.start_urls:
-                yield scrapy.Request(
-                    url=url, callback=self.parse, headers=self.default_headers)
+                input_f_name = f'{self.name}_list_{week_num}.csv'
+                input_f_path = os.path.join(OUTPUT_LIST_DIR, input_f_name)
+                success_f_path = os.path.join(OUTPUT_STATUS_DIR, f'{self.name}_list_{week_num}_success.txt')
 
-    def parse(self, response):
-        headers = self.default_headers
-        headers['referer'] = response.request.url
+                items = read_file(input_f_path)
+                _prev_success_urls = read_file(success_f_path) if os.path.exists(success_f_path) else []
+                prev_success_urls = list(set(_prev_success_urls))
 
-        for i in range(self.target_start_week, self.target_end_week + 1):
-            if i < 10:
-                week_num = f'{self.target_year}0{i}'
-            else:
-                week_num = f'{self.target_year}{i}'
+                success_urls = []
+                for index, item in enumerate(items):
+                    original_doc_id = item.get('ID')
+                    doc_id = original_doc_id.replace('/', '')
+                    request_url = f'{self.base_url}/search/en/detail.jsf?docId={doc_id}&_gid={week_num}'
+                    if request_url in prev_success_urls:
+                        print(f"Already succeeded - request_url: {request_url}")
+                        continue
 
-            input_f_name = f'patentscope_wipo_int_list_{week_num}.csv'
-            input_f_path = os.path.join(OUTPUT_LIST_DIR, input_f_name)
-            failed_f_path = os.path.join(OUTPUT_STATUS_DIR, f'patentscope_wipo_int_list_{week_num}_failed.txt')
-            success_f_path = os.path.join(OUTPUT_STATUS_DIR, f'patentscope_wipo_int_list_{week_num}_success.txt')
+                    try:
+                        driver.get(request_url)
+                        WebDriverWait(driver, 30).until(EC.presence_of_element_located((
+                            By.CSS_SELECTOR, "ul.ui-tabs-nav > li"))
+                        )
 
-            items = read_file(input_f_path)
-            succeeded_urls = read_file(success_f_path, file_format='txt')
+                        driver.find_element_by_css_selector("ul.ui-tabs-nav > li:first-child > a").click()
+                        time.sleep(1)
 
-            output_items = []
-            failed_items = []
-            success_urls = []
-            failed_urls = []
-            for index, item in enumerate(items):
-                num_of_items = len(items)
-                count = index + 1
-                original_doc_id = item.get('ID')
-                title = item.get('Title')
-                doc_id = original_doc_id.replace('/', '')
-                request_url = f'{self.base_url}/search/en/detail.jsf?docId={doc_id}&_gid={week_num}'
-                if request_url in succeeded_urls:
-                    print(f'Skipped - Index: {count}/{num_of_items} - URL: {request_url}')
-                    self.logger.info(f'Skipped - Index: {count}/{num_of_items} - URL: {request_url}')
-                    continue
-                try:
-                    time.sleep(10)
-                    res = requests.get(url=request_url, headers=headers)
+                        main_data_elems_css = '.ps-biblio-data--biblio-card > div'
+                        WebDriverWait(driver, 30).until(EC.presence_of_element_located((
+                            By.CSS_SELECTOR, main_data_elems_css))
+                        )
 
-                    scrapy_selector = Selector(text=res.text)
+                        el_selector = Selector(text=driver.page_source)
+                        publication_date_str = el_selector.css(main_data_elems_css)[1].css(
+                            'span:last-child::text').get().strip()
+                        publication_date = datetime.strptime(publication_date_str, "%d.%m.%Y")
+                        if publication_date < self.min_date:
+                            continue
 
-                    main_data_elems_css = '.ps-biblio-data--biblio-card > div'
-                    n_main_data_elems = len(scrapy_selector.css(main_data_elems_css))
+                        driver.find_element_by_css_selector("ul.ui-tabs-nav > li:last-child > a").click()
+                        WebDriverWait(driver, 30).until(EC.presence_of_element_located(
+                            (By.CSS_SELECTOR, ".patent-documents > div"))
+                        )
 
-                    publication_number = scrapy_selector.css(main_data_elems_css)[0].css('span:last-child::text').get()
-                    publication_date = scrapy_selector.css(main_data_elems_css)[1].css('span:last-child::text').get()
-                    application_number = scrapy_selector.css(main_data_elems_css)[2].css('span:last-child::text').get()
+                        driver.find_element_by_css_selector(
+                            ".patent-documents > div:first-child tbody > tr > td:last-child a:first-child"
+                        ).click()
+                        time.sleep(5)
 
-                    idx = 6
-                    test_applicants = scrapy_selector.css(main_data_elems_css)[idx].css(
-                        'span li span::text').getall() if n_main_data_elems > idx else []
-                    if not test_applicants:
-                        idx = 4
-                    test_applicants = scrapy_selector.css(main_data_elems_css)[idx].css(
-                        'span li span::text').getall() if n_main_data_elems > idx else []
-                    if not test_applicants:
-                        idx = 7
+                        success_urls.append(request_url)
+                        if (index + 1) % 10 == 0:
+                            write_results_to_txt(success_f_path, success_urls, "a")
+                    except Exception as e:
+                        print("failed_url: ", request_url)
+                        print(e)
 
-                    applicants, inventors, agents, priority_data, publication_language = self.get_main_body_data(
-                        scrapy_selector, main_data_elems_css, n_main_data_elems, idx)
-
-                    detailed_title = scrapy_selector.css('.PCTtitle').get()
-                    abstract = scrapy_selector.css('.patent-abstract').get()
-
-                    raw_output_item = {
-                        'week_number': week_num,
-                        'title': title,
-                        'publication_number': publication_number,
-                        'publication_date': publication_date,
-                        'application_number': application_number,
-                        'applicants': applicants,
-                        'inventors': inventors,
-                        'agents': agents,
-                        'priority_data': priority_data,
-                        'publication_language': publication_language,
-                        'detailed_title': detailed_title,
-                        'abstract': abstract,
-                        'item_url': request_url,
-                        'website': self.base_url
-                    }
-
-                    output_item = self.transform_item(raw_output_item)
-                    output_items.append(output_item)
-                    success_urls.append(request_url)
-                    print(f'Success - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
-                    self.logger.info(
-                        f'Success - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
-
-                except Exception as e:
-                    failed_items.append(item)
-                    failed_urls.append(request_url)
-                    print(f'Failed - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
-                    print(f'Exception - {str(e)}')
-                    self.logger.info(
-                        f'Failed - Index: {count}/{num_of_items} - InputFile: {week_num} - URL: {request_url}')
-                    self.logger.info(f'Exception - {str(e)}')
-
-                n_output_items = len(output_items)
-                if n_output_items > 0 and n_output_items % 100 == 0:
-                    self.write_success_result(self.feed_uri, output_items, success_f_path, success_urls)
-                    output_items = []
-                    success_urls = []
-                    self.logger.info(f'Writing result - Index: {count}/{num_of_items}')
-                    print(f'Writing result - Index: {count}/{num_of_items}')
-
-            self.write_success_result(self.feed_uri, output_items, success_f_path, success_urls)
-            write_results_to_csv(os.path.join(OUTPUT_FAILED_DIR, input_f_name), failed_items, rewrite_mode=True)
-            write_results_to_txt(failed_f_path, failed_urls)
-
-    @staticmethod
-    def get_main_body_data(scrapy_selector, main_data_elems_css, n_main_data_elems, idx):
-        applicants = scrapy_selector.css(main_data_elems_css)[idx].css(
-            'span li span::text').getall() if n_main_data_elems > idx else []
-        inventors = scrapy_selector.css(main_data_elems_css)[idx + 1].css(
-            'span li span::text').getall() if n_main_data_elems > idx + 1 else []
-        agents = scrapy_selector.css(main_data_elems_css)[idx + 2].css(
-            'span li span::text').getall() if n_main_data_elems > idx + 2 else []
-        priority_data = scrapy_selector.css(main_data_elems_css)[idx + 3].css(
-            'span tr *::text').getall() if n_main_data_elems > idx + 3 else []
-        publication_language = scrapy_selector.css(main_data_elems_css)[idx + 4].css(
-            'span:last-child::text').get() if n_main_data_elems > idx + 4 else ''
-
-        return applicants, inventors, agents, priority_data, publication_language
-
-    @staticmethod
-    def transform_item(raw_item):
-        item = {}
-        list_item_keys = ['applicants', 'inventors', 'agents', 'priority_data']
-        delimiter = ' ||| '
-        for k, v in raw_item.items():
-            if k in list_item_keys:
-                filtered_item = [elem.strip() for elem in v]
-                item[k] = delimiter.join(filtered_item)
-            else:
-                item[k] = v.strip() if v else v
-        return item
-
-    @staticmethod
-    def write_success_result(feed_uri, output_items, success_f_path, success_urls):
-        write_results_to_csv(feed_uri, output_items)
-        write_results_to_txt(success_f_path, success_urls, f_open_mode='a')
+                write_results_to_txt(success_f_path, success_urls, "w")
