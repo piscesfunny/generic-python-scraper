@@ -83,18 +83,24 @@ class PatentScopeWipoSpider(scrapy.Spider):
                 input_f_name = f'{self.name}_list_{week_num}.csv'
                 input_f_path = os.path.join(OUTPUT_LIST_DIR, input_f_name)
                 success_f_path = os.path.join(OUTPUT_STATUS_DIR, f'{self.name}_list_{week_num}_success.txt')
+                ignored_f_path = os.path.join(OUTPUT_STATUS_DIR, f'{self.name}_list_{week_num}_ignored.txt')
 
                 items = read_file(input_f_path)
                 _prev_success_urls = read_file(success_f_path, 'txt') if os.path.exists(success_f_path) else []
                 prev_success_urls = list(set(_prev_success_urls))
+
+                _prev_ignored_urls = read_file(ignored_f_path, 'txt') if os.path.exists(ignored_f_path) else []
+                prev_ignored_urls = list(set(_prev_ignored_urls))
+
+                urls_to_skip = prev_success_urls + prev_ignored_urls
 
                 current_success_urls = []
                 for index, item in enumerate(items):
                     original_doc_id = item.get('ID')
                     doc_id = original_doc_id.replace('/', '')
                     request_url = f'{self.base_url}/search/en/detail.jsf?docId={doc_id}&_gid={week_num}'
-                    if request_url in prev_success_urls:
-                        print(f"Already succeeded - request_url: {request_url}")
+                    if request_url in urls_to_skip:
+                        print(f"Skipped - request_url: {request_url}")
                         continue
 
                     try:
@@ -116,6 +122,8 @@ class PatentScopeWipoSpider(scrapy.Spider):
                             'span:last-child::text').get().strip()
                         publication_date = datetime.strptime(publication_date_str, "%d.%m.%Y")
                         if publication_date < self.min_date:
+                            print("ignored_url: ", request_url)
+                            write_results_to_txt(ignored_f_path, [request_url], "a")
                             continue
 
                         driver.find_element_by_css_selector("ul.ui-tabs-nav > li:last-child > a").click()
