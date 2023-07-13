@@ -85,10 +85,10 @@ class PatentScopeWipoSpider(scrapy.Spider):
                 success_f_path = os.path.join(OUTPUT_STATUS_DIR, f'{self.name}_list_{week_num}_success.txt')
 
                 items = read_file(input_f_path)
-                _prev_success_urls = read_file(success_f_path) if os.path.exists(success_f_path) else []
+                _prev_success_urls = read_file(success_f_path, 'txt') if os.path.exists(success_f_path) else []
                 prev_success_urls = list(set(_prev_success_urls))
 
-                success_urls = []
+                current_success_urls = []
                 for index, item in enumerate(items):
                     original_doc_id = item.get('ID')
                     doc_id = original_doc_id.replace('/', '')
@@ -128,11 +128,11 @@ class PatentScopeWipoSpider(scrapy.Spider):
                         ).click()
                         time.sleep(5)
 
-                        success_urls.append(request_url)
-                        if (index + 1) % 10 == 0:
-                            write_results_to_txt(success_f_path, success_urls, "a")
+                        current_success_urls.append(request_url)
+                        write_results_to_txt(success_f_path, [request_url], "a")
                     except Exception as e:
                         print("failed_url: ", request_url)
                         print(e)
 
+                success_urls = prev_success_urls + current_success_urls
                 write_results_to_txt(success_f_path, success_urls, "w")
