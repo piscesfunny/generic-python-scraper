@@ -102,7 +102,7 @@ class ScienceDailySpider(scrapy.Spider):
                 WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, 'story_text')))
                 # Save the PDF
                 driver.execute_script("window.print();")  # Chrome-specific command to save page as PDF
-                time.sleep(3)
+                time.sleep(5)
 
                 current_success_urls.append(url)
                 write_results_to_txt(success_f_path, [url], "a")
