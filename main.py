@@ -20,6 +20,7 @@ from apps.scitechdaily import start_scrapper as scitechdaily_start_scrapper
 from apps.parts_cat import start_scrapper as parts_cat_start_scrapper
 from apps.general_kinematics import start_scrapper as general_kinematics_start_scrapper
 from apps.kjdb import start_scrapper as kjdb_start_scrapper
+from apps.sciencedaily import start_scrapper as science_daily_start_scrapper
 
 from apps.patentscope_wipo_int import start_scrapper as pwi_start_scrapper
 from utils.config import *
@@ -232,5 +233,14 @@ if __name__ == '__main__':
             action_type=sys.argv[2],
             target_start_num=int(sys.argv[3]),
             target_end_num=int(sys.argv[4]),
+            scraping_target=sys.argv[5]
+        )
+
+    if sys.argv[1] == 'science_daily':
+        science_daily_start_scrapper(
+            site_name=sys.argv[1],
+            action_type=sys.argv[2],
+            target_start_date=sys.argv[3],
+            target_end_date=sys.argv[4],
             scraping_target=sys.argv[5]
         )
