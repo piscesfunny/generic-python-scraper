@@ -46,6 +46,10 @@ class PatentScopeWipoSpider(scrapy.Spider):
         self.min_date = datetime.strptime("01.08.2022", "%d.%m.%Y")
 
     def start_requests(self):
+        for url in self.start_urls:
+            yield scrapy.Request(url=url, callback=self.parse, headers=self.default_headers)
+
+    def parse(self, response, **kwargs):
         if self.scraping_target == SCRAPPING_TARGET_LIST:
             driver = initialize_chrome_driver()
             category_url = 'https://patentscope.wipo.int/search/en/resultWeeklyBrowse.jsf'
@@ -86,6 +90,9 @@ class PatentScopeWipoSpider(scrapy.Spider):
                 ignored_f_path = os.path.join(OUTPUT_STATUS_DIR, f'{self.name}_list_{week_num}_ignored.txt')
 
                 items = read_file(input_f_path)
+                if len(items) < 1:
+                    continue
+
                 _prev_success_urls = read_file(success_f_path, 'txt') if os.path.exists(success_f_path) else []
                 prev_success_urls = list(set(_prev_success_urls))
 
