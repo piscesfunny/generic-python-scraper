@@ -1,17 +1,16 @@
+import os.path
 import time
 from datetime import datetime
 
 import scrapy
 from scrapy import Selector
-from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
+from utils.config import OUTPUT_RESULT_DIR, OUTPUT_STATUS_DIR
 from utils.constants import SCRAPPING_TARGET_LIST
-from utils.helpers import initialize_chrome_driver, write_results_to_txt, read_file, scroll_to_bottom
+from utils.helpers import initialize_chrome_driver, write_results_to_txt, read_file
 from utils.logging import ScraperLogger
 
 
@@ -44,9 +43,8 @@ class ScienceDailySpider(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse, headers=self.default_headers)
 
     def parse(self, response, **kwargs):
-        driver = initialize_chrome_driver()
-
         if self.scraping_target == SCRAPPING_TARGET_LIST:
+            driver = initialize_chrome_driver()
             # save_dir = os.path.join(OUTPUT_RESULT_DIR, self.name)
             driver.get(f"{response.url}/news")
             # driver.execute_script('window.print();')
@@ -86,20 +84,29 @@ class ScienceDailySpider(scrapy.Spider):
             write_results_to_txt(self.result_list_f_path, filtered_urls)
         else:
             urls = read_file(self.result_list_f_path, 'txt')
+            save_dir = os.path.join(OUTPUT_RESULT_DIR, self.name)
+            os.makedirs(save_dir, exist_ok=True)
+
+            success_f_path = os.path.join(OUTPUT_STATUS_DIR, f'{self.name}_list_success.txt')
+            _prev_success_urls = read_file(success_f_path, 'txt') if os.path.exists(success_f_path) else []
+            prev_success_urls = list(set(_prev_success_urls))
+
+            driver = initialize_chrome_driver(maximized=False, printable=True, save_dir=save_dir)
+            current_success_urls = []
             for url in urls:
+                if url in prev_success_urls:
+                    print(f"Skipped - request_url: {url}")
+                    continue
+
                 driver.get(url)
                 WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, 'story_text')))
-                driver.find_element_by_css_selector('a.print.black').click()
-
-                time.sleep(2)
-
-                # Simulate pressing the Enter key to confirm the print
-                driver.switch_to.window(driver.window_handles[-1])
-                driver.find_element_by_tag_name("body").send_keys(Keys.ENTER)
-
-                time.sleep(2)
-
                 # Save the PDF
-                driver.execute_script("window.print()")  # Chrome-specific command to save page as PDF
-                time.sleep(1)
+                driver.execute_script("window.print();")  # Chrome-specific command to save page as PDF
+                time.sleep(3)
+
+                current_success_urls.append(url)
+                write_results_to_txt(success_f_path, [url], "a")
+
+            success_urls = prev_success_urls + current_success_urls
+            write_results_to_txt(success_f_path, success_urls, "w")
         driver.close()
