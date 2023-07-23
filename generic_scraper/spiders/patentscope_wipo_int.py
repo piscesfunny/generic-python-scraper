@@ -9,7 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.wait import WebDriverWait
 
-from utils.config import OUTPUT_LIST_DIR, OUTPUT_STATUS_DIR
+from utils.config import OUTPUT_LIST_DIR, OUTPUT_STATUS_DIR, OUTPUT_RESULT_DIR
 from utils.constants import *
 from utils.helpers import initialize_chrome_driver, read_file, write_results_to_txt
 from utils.logging import ScraperLogger
@@ -77,7 +77,8 @@ class PatentScopeWipoSpider(scrapy.Spider):
                 driver.find_element_by_id(excel_download_elem_id).click()
                 time.sleep(5)
         else:
-            driver = initialize_chrome_driver()
+            save_dir = os.path.join(OUTPUT_RESULT_DIR, self.name, "raw")
+            driver = initialize_chrome_driver(save_dir=save_dir)
             for i in range(self.target_start_week, self.target_end_week + 1):
                 if i < 10:
                     week_num = f'{self.target_year}0{i}'
@@ -139,7 +140,7 @@ class PatentScopeWipoSpider(scrapy.Spider):
                         )
 
                         driver.find_element_by_css_selector(
-                            ".patent-documents > div:first-child tbody > tr > td:last-child a:first-child"
+                            ".patent-documents > div:first-child tbody > tr > td:last-child > div > span:last-child > a"
                         ).click()
                         time.sleep(5)
 
