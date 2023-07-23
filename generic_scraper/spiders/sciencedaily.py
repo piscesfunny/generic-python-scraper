@@ -87,7 +87,8 @@ class ScienceDailySpider(scrapy.Spider):
             save_dir = os.path.join(OUTPUT_RESULT_DIR, self.name)
             os.makedirs(save_dir, exist_ok=True)
 
-            success_f_path = os.path.join(OUTPUT_STATUS_DIR, f'{self.name}_list_success.txt')
+            success_f_name = os.path.splitext(os.path.basename(self.result_list_f_path))[0]
+            success_f_path = os.path.join(OUTPUT_STATUS_DIR, f'{success_f_name}_success.txt')
             _prev_success_urls = read_file(success_f_path, 'txt') if os.path.exists(success_f_path) else []
             prev_success_urls = list(set(_prev_success_urls))
 

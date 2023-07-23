@@ -19,7 +19,10 @@ def start_scrapper(
         feed_format = 'txt'
         target_start_date_dt = datetime.strptime(target_start_date, "%Y-%m-%d")
         target_end_date_dt = datetime.strptime(target_end_date, "%Y-%m-%d")
-        result_list_f_path = os.path.join(OUTPUT_LIST_DIR, f'{site_name}_list.{feed_format}')
+        result_list_f_path = os.path.join(
+            OUTPUT_LIST_DIR,
+            f'{site_name}_list_{target_start_date}_{target_end_date}.{feed_format}'
+        )
 
         process = CrawlerProcess()
         process.crawl(ScienceDailySpider, param={
