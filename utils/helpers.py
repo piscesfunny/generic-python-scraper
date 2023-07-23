@@ -33,6 +33,12 @@ def initialize_chrome_driver(maximized=True, printable=False, save_dir=None):
     else:
         executable_path = ''
 
+    prefs = {
+        "download.default_directory": save_dir if save_dir else OUTPUT_RESULT_DIR,
+        "download.prompt_for_download": False,
+        "safebrowsing.enabled": True,
+    }
+
     if printable:
         settings = {
             "recentDestinations": [{
@@ -43,11 +49,11 @@ def initialize_chrome_driver(maximized=True, printable=False, save_dir=None):
             "selectedDestinationId": "Save as PDF",
             "version": 2
         }
-        prefs = {'printing.print_preview_sticky_settings.appState': json.dumps(settings)}
-        if save_dir:
-            prefs['savefile.default_directory'] = save_dir
-        options.add_experimental_option('prefs', prefs)
+        prefs['printing.print_preview_sticky_settings.appState'] = json.dumps(settings)
+        prefs['savefile.default_directory'] = save_dir if save_dir else OUTPUT_RESULT_DIR
         options.add_argument('--kiosk-printing')
+
+    options.add_experimental_option('prefs', prefs)
 
     driver = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
 
