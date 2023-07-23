@@ -27,9 +27,6 @@ def initialize_chrome_driver(
         options.add_argument('--start-maximized')
     else:
         options.add_argument("window-size=800,600")
-    desired_capabilities = options.to_capabilities()
-    # driver = webdriver.Chrome(executable_path='/usr/lib/chromium-browser/chromedriver', chrome_options=options)
-    # driver = webdriver.Chrome(desired_capabilities=desired_capabilities)
     os_type = platform.system()
     if os_type == 'Linux':
         executable_path = f'{WEBDRIVER_DIR}/chromedriver'
