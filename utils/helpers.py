@@ -4,11 +4,13 @@ import platform
 import re
 import time
 import pandas as pd
+import pyodbc
+import pypyodbc
 import wget
 
 from selenium import webdriver
 
-from utils.config import WEBDRIVER_DIR
+from utils.config import WEBDRIVER_DIR, OUTPUT_RESULT_DIR, BASE_DIR
 from utils.logging import ScraperLogger
 
 
@@ -169,3 +171,28 @@ def download_image_by_wget(url_list, output_dir, failed_file_path):
 def extract_substr_between_two_marks(text, mark1, mark2):
     m = re.search(f'{mark1}(.+?){mark2}', text)
     return m.group(1) if m else None
+
+
+def csv2mdb(target_dir):
+    for f_path in os.listdir(target_dir):
+        filename, file_extension = os.path.splitext(f_path)
+        db_f_path = os.path.join(BASE_DIR, "db", f"{filename}.mdb")
+        if os.path.exists(db_f_path):
+            print(f"Skipped file - {f_path}")
+            continue
+        pypyodbc.win_create_mdb(db_f_path)
+
+        # DATABASE CONNECTION
+        connection_str = "DRIVER={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={};".format(db_f_path)
+        con = pyodbc.connect(connection_str, ansi=True)
+        con.setdecoding(pyodbc.SQL_CHAR, encoding='iso-8859-1')
+        con.setdecoding(pyodbc.SQL_WCHAR, encoding='iso-8859-1')
+        con.setencoding(encoding='iso-8859-1')
+
+        # RUN QUERY
+        strSQL = f"SELECT * INTO [patentscope] FROM [text;HDR=Yes;FMT=Delimited(,);Database={OUTPUT_RESULT_DIR}].{f_path};"
+        cur = con.cursor()
+        cur.execute(strSQL)
+        con.commit()
+        con.close()
+        print(f"MDB file has been created from {f_path}")
