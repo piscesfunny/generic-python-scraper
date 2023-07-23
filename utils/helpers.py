@@ -14,10 +14,15 @@ from utils.config import WEBDRIVER_DIR, OUTPUT_RESULT_DIR, BASE_DIR
 from utils.logging import ScraperLogger
 
 
-def initialize_chrome_driver(maximized=True, printable=False, save_dir=None):
+def initialize_chrome_driver(
+    maximized=True,
+    headless=False,
+    printable=False,
+    save_dir=None,
+):
     options = webdriver.ChromeOptions()
-    # options.add_argument('--headless')
-    # options.add_argument('--no-sandbox')
+    if headless:
+        options.add_argument('--headless')
     if maximized:
         options.add_argument('--start-maximized')
     else:
