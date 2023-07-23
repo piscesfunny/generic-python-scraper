@@ -77,8 +77,9 @@ class PatentScopeWipoSpider(scrapy.Spider):
                 driver.find_element_by_id(excel_download_elem_id).click()
                 time.sleep(5)
         else:
-            save_dir = os.path.join(OUTPUT_RESULT_DIR, self.name, "raw")
-            driver = initialize_chrome_driver(save_dir=save_dir)
+            download_dir = os.path.join(OUTPUT_RESULT_DIR, self.name, "raw")
+            os.makedirs(download_dir, exist_ok=True)
+            driver = initialize_chrome_driver(save_dir=download_dir)
             for i in range(self.target_start_week, self.target_end_week + 1):
                 if i < 10:
                     week_num = f'{self.target_year}0{i}'
