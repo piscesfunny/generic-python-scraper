@@ -1,10 +1,11 @@
 import pandas as pd
-
+import xmltodict
 from scrapy.crawler import CrawlerProcess
 
 from generic_scraper.spiders.patentscope_wipo_int import PatentScopeWipoSpider
 from utils.config import *
 from utils.constants import ACTION_SCRAPPING, ACTION_CONVERT
+from utils.helpers import write_results_to_csv
 
 
 def start_scrapper(site_name, action_type, target_year=None, target_start_week=None, target_end_week=None,
@@ -50,5 +51,55 @@ def start_scrapper(site_name, action_type, target_year=None, target_start_week=N
         pass
 
 
-if __name__ == '__main__':
-    start_scrapper()
+def parse_xml(site_name):
+    input_dir = os.path.join(OUTPUT_RESULT_DIR, site_name, "raw")
+    input_f_path = os.path.join(input_dir, "AT2022060350-IASR.xml")
+    with open(input_f_path) as f:
+        raw_data = xmltodict.parse(f.read())
+        print(raw_data)
+        bibliographic_data = raw_data["wo-international-application-status"]["wo-bibliographic-data"]
+        publication_data = bibliographic_data["publication-reference"]["document-id"]
+
+        publication_number = f'{publication_data["country"]}/{publication_data["doc-number"]}'
+        publication_date = publication_data["date"]
+        application_number = bibliographic_data["application-reference"]["document-id"]["doc-number"]
+        filing_date = bibliographic_data["application-reference"]["document-id"]["date"]
+        priority_date = bibliographic_data["wo-priority-info"]["priority-claim"]["date"]
+        ipc_raw_items = bibliographic_data["classifications-ipcr"]["classification-ipcr"]
+        ipc_items = []
+        for item in ipc_raw_items:
+            ipc_item = f"{item['section']}{item['class']}{item['subclass']} {item['main-group']}/{item['subgroup']}" \
+                       f" ({item['ipc-version-indicator']['date']})"
+            ipc_items.append(ipc_item)
+        ipc = "; ".join(ipc_items)
+
+        applicant_raw_items = bibliographic_data['parties']['applicants']['applicant']
+        applicants = []
+        inventor_raw_items = bibliographic_data['parties']['inventors']['inventor']
+        inventors = []
+        agent_raw_items = bibliographic_data['parties']['agents']['agent']
+        agents = []
+
+        titles = bibliographic_data['invention-title']
+        title_en = titles[0]['#text']
+        abstracts = raw_data["wo-international-application-status"]['abstract']
+        abstract_en = abstracts[0]['p']['#text']
+
+        output_item = {
+            "publication_number": publication_number,
+            "publication_date": publication_date,
+            "application_number": application_number,
+            "filing_date": filing_date,
+            "priority_date": priority_date,
+            "international_patent_classification": ipc,
+            "applicants": applicants,
+            "inventors": inventors,
+            "agents": agents,
+            "title_en": title_en,
+            "abstract_en": abstract_en,
+        }
+        output_items = [output_item]
+
+        output_dir = os.path.join(OUTPUT_RESULT_DIR, site_name)
+        output_f_path = os.path.join(output_dir, 'tmp')
+        write_results_to_csv(output_f_path, output_items)
