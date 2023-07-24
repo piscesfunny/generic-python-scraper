@@ -4,25 +4,29 @@ import platform
 import re
 import time
 import pandas as pd
+import pyodbc
+import pypyodbc
 import wget
 
 from selenium import webdriver
 
-from utils.config import WEBDRIVER_DIR
+from utils.config import WEBDRIVER_DIR, OUTPUT_RESULT_DIR, BASE_DIR
 from utils.logging import ScraperLogger
 
 
-def initialize_chrome_driver(maximized=True, printable=False, save_dir=None):
+def initialize_chrome_driver(
+    maximized=True,
+    headless=False,
+    printable=False,
+    save_dir=None,
+):
     options = webdriver.ChromeOptions()
-    # options.add_argument('--headless')
-    # options.add_argument('--no-sandbox')
+    if headless:
+        options.add_argument('--headless')
     if maximized:
         options.add_argument('--start-maximized')
     else:
         options.add_argument("window-size=800,600")
-    desired_capabilities = options.to_capabilities()
-    # driver = webdriver.Chrome(executable_path='/usr/lib/chromium-browser/chromedriver', chrome_options=options)
-    # driver = webdriver.Chrome(desired_capabilities=desired_capabilities)
     os_type = platform.system()
     if os_type == 'Linux':
         executable_path = f'{WEBDRIVER_DIR}/chromedriver'
@@ -30,6 +34,12 @@ def initialize_chrome_driver(maximized=True, printable=False, save_dir=None):
         executable_path = f'{WEBDRIVER_DIR}/chromedriver.exe'
     else:
         executable_path = ''
+
+    prefs = {
+        "download.default_directory": save_dir if save_dir else OUTPUT_RESULT_DIR,
+        "download.prompt_for_download": False,
+        "safebrowsing.enabled": True,
+    }
 
     if printable:
         settings = {
@@ -41,11 +51,11 @@ def initialize_chrome_driver(maximized=True, printable=False, save_dir=None):
             "selectedDestinationId": "Save as PDF",
             "version": 2
         }
-        prefs = {'printing.print_preview_sticky_settings.appState': json.dumps(settings)}
-        if save_dir:
-            prefs['savefile.default_directory'] = save_dir
-        options.add_experimental_option('prefs', prefs)
+        prefs['printing.print_preview_sticky_settings.appState'] = json.dumps(settings)
+        prefs['savefile.default_directory'] = save_dir if save_dir else OUTPUT_RESULT_DIR
         options.add_argument('--kiosk-printing')
+
+    options.add_experimental_option('prefs', prefs)
 
     driver = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
 
@@ -169,3 +179,28 @@ def download_image_by_wget(url_list, output_dir, failed_file_path):
 def extract_substr_between_two_marks(text, mark1, mark2):
     m = re.search(f'{mark1}(.+?){mark2}', text)
     return m.group(1) if m else None
+
+
+def csv2mdb(target_dir):
+    for f_path in os.listdir(target_dir):
+        filename, file_extension = os.path.splitext(f_path)
+        db_f_path = os.path.join(BASE_DIR, "db", f"{filename}.mdb")
+        if os.path.exists(db_f_path):
+            print(f"Skipped file - {f_path}")
+            continue
+        pypyodbc.win_create_mdb(db_f_path)
+
+        # DATABASE CONNECTION
+        connection_str = "DRIVER={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={};".format(db_f_path)
+        con = pyodbc.connect(connection_str, ansi=True)
+        con.setdecoding(pyodbc.SQL_CHAR, encoding='iso-8859-1')
+        con.setdecoding(pyodbc.SQL_WCHAR, encoding='iso-8859-1')
+        con.setencoding(encoding='iso-8859-1')
+
+        # RUN QUERY
+        strSQL = f"SELECT * INTO [patentscope] FROM [text;HDR=Yes;FMT=Delimited(,);Database={OUTPUT_RESULT_DIR}].{f_path};"
+        cur = con.cursor()
+        cur.execute(strSQL)
+        con.commit()
+        con.close()
+        print(f"MDB file has been created from {f_path}")
