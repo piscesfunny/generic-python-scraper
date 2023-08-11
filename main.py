@@ -218,15 +218,20 @@ if __name__ == '__main__':
         )
 
     if sys.argv[1] == 'patentscope_wipo_int':
-        pwi_start_scrapper(
-            site_name=sys.argv[1],
-            action_type=sys.argv[2],
-            target_year=int(sys.argv[3]),
-            target_start_week=int(sys.argv[4]),
-            target_end_week=int(sys.argv[5]),
-            scraping_target=sys.argv[6]
-        )
-
+        if sys.argv[2] == ACTION_SCRAPPING:
+            pwi_start_scrapper(
+                site_name=sys.argv[1],
+                action_type=sys.argv[2],
+                target_year=int(sys.argv[3]),
+                target_start_week=int(sys.argv[4]),
+                target_end_week=int(sys.argv[5]),
+                scraping_target=sys.argv[6]
+            )
+        elif sys.argv[2] == ACTION_CONVERT:
+            pwi_start_scrapper(
+                site_name=sys.argv[1],
+                action_type=sys.argv[2],
+            )
     if sys.argv[1] == 'kjdb':
         kjdb_start_scrapper(
             site_name=sys.argv[1],

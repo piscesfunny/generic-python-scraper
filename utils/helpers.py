@@ -3,6 +3,8 @@ import os
 import platform
 import re
 import time
+from datetime import datetime
+
 import pandas as pd
 import pyodbc
 import pypyodbc
@@ -204,3 +206,16 @@ def csv2mdb(target_dir):
         con.commit()
         con.close()
         print(f"MDB file has been created from {f_path}")
+
+
+def convert_date_string_format(
+    date_string,
+    origin_format="%Y%m%d",
+    desired_format="%d %B %Y (%d.%m.%Y)",
+):
+    date_obj = datetime.strptime(date_string, origin_format)
+
+    # Format the datetime object into the desired format
+    formatted_date = date_obj.strftime(desired_format)
+
+    return formatted_date
