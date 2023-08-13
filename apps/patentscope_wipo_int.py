@@ -63,7 +63,7 @@ def start_scrapper(site_name, action_type, target_year=None, target_start_week=N
             _prev_success_f_paths = read_file(success_f_path, 'txt') if os.path.exists(success_f_path) else []
             prev_success_f_paths = list(set(_prev_success_f_paths))
 
-            for f_path in f_paths:
+            for idx, f_path in enumerate(f_paths):
                 if f_path in prev_success_f_paths:
                     print(f"Skipped - f_path: {f_path}")
                     continue
@@ -74,6 +74,7 @@ def start_scrapper(site_name, action_type, target_year=None, target_start_week=N
                     print(f"failed - f_path: {f_path}")
                     print(e)
                     write_results_to_txt(failed_f_path, [f_path], "a")
+                print(f"progress - {idx + 1}/{len(f_paths)}")
     else:
         pass
 
@@ -81,7 +82,6 @@ def start_scrapper(site_name, action_type, target_year=None, target_start_week=N
 def parse_xml(f_path, output_f_path):
     with open(f_path) as f:
         raw_data = xmltodict.parse(f.read())
-        print(raw_data)
         bibliographic_data = raw_data["wo-international-application-status"]["wo-bibliographic-data"]
         publication_data = bibliographic_data["publication-reference"]["document-id"]
 
