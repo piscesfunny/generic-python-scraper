@@ -5,7 +5,7 @@ from scrapy.crawler import CrawlerProcess
 from generic_scraper.spiders.patentscope_wipo_int import PatentScopeWipoSpider
 from utils.config import *
 from utils.constants import ACTION_SCRAPPING, ACTION_CONVERT
-from utils.helpers import write_results_to_csv, convert_date_string_format
+from utils.helpers import write_results_to_csv, convert_date_string_format, write_results_to_txt, read_file
 
 
 def start_scrapper(site_name, action_type, target_year=None, target_start_week=None, target_end_week=None,
@@ -54,13 +54,31 @@ def start_scrapper(site_name, action_type, target_year=None, target_start_week=N
                 for f in os.listdir(week_dir)
                 if os.path.isfile(os.path.join(week_dir, f))
             ]
+            output_f_name = f"{site_name}_{week}.csv"
+            output_f_path = os.path.join(output_dir, output_f_name)
+
+            success_f_path = os.path.join(output_dir, f"{site_name}_{week}_success.txt")
+            failed_f_path = os.path.join(output_dir, f"{site_name}_{week}_failed.txt")
+
+            _prev_success_f_paths = read_file(success_f_path, 'txt') if os.path.exists(success_f_path) else []
+            prev_success_f_paths = list(set(_prev_success_f_paths))
+
             for f_path in f_paths:
-                parse_xml(f_path, site_name, week, output_dir)
+                if f_path in prev_success_f_paths:
+                    print(f"Skipped - f_path: {f_path}")
+                    continue
+                try:
+                    parse_xml(f_path, output_f_path)
+                    write_results_to_txt(success_f_path, [f_path], "a")
+                except Exception as e:
+                    print(f"failed - f_path: {f_path}")
+                    print(e)
+                    write_results_to_txt(failed_f_path, [f_path], "a")
     else:
         pass
 
 
-def parse_xml(f_path, site_name, week, output_dir):
+def parse_xml(f_path, output_f_path):
     with open(f_path) as f:
         raw_data = xmltodict.parse(f.read())
         print(raw_data)
@@ -91,9 +109,12 @@ def parse_xml(f_path, site_name, week, output_dir):
         applicant_raw_items = _applicant_raw_items if isinstance(_applicant_raw_items, list) else [_applicant_raw_items]
         applicants = parse_items(applicant_raw_items)
 
-        _inventor_raw_items = bibliographic_data['parties']['inventors']['inventor']
-        inventor_raw_items = _inventor_raw_items if isinstance(_inventor_raw_items, list) else [_inventor_raw_items]
-        inventors = parse_items(inventor_raw_items)
+        if 'inventors' not in bibliographic_data['parties']:
+            inventors = applicants
+        else:
+            _inventor_raw_items = bibliographic_data['parties']['inventors']['inventor']
+            inventor_raw_items = _inventor_raw_items if isinstance(_inventor_raw_items, list) else [_inventor_raw_items]
+            inventors = parse_items(inventor_raw_items)
 
         _agent_raw_items = bibliographic_data['parties']['agents']['agent']
         agent_raw_items = _agent_raw_items if isinstance(_agent_raw_items, list) else [_agent_raw_items]
@@ -126,9 +147,6 @@ def parse_xml(f_path, site_name, week, output_dir):
             "abstract_en": abstract_en,
         }
         output_items = [output_item]
-
-        output_f_name = f"{site_name}_{week}.csv"
-        output_f_path = os.path.join(output_dir, output_f_name)
         write_results_to_csv(output_f_path, output_items)
 
 
