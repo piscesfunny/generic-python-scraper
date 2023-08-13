@@ -154,10 +154,14 @@ def parse_items(raw_items):
     delimiter = " ||| "
     items = []
     for raw_item in raw_items:
-        inventor_name = raw_item["addressbook"]["name"]["#text"]
-        inventor_address = f'{raw_item["addressbook"]["address"]["address-1"]}' \
-                           f' ({raw_item["addressbook"]["address"]["country"]})'
-        item = f"{inventor_name}; {inventor_address}"
+        name = raw_item["addressbook"]["name"]["#text"]
+        address_data = raw_item["addressbook"]["address"]
+        address_address = f'{address_data.get("address-1", "")}'
+        address_country = f'{address_data.get("country", "")}'
+        address = address_address
+        if address_country:
+            address += f" ({address_country})"
+        item = f"{name}; {address}"
         items.append(item)
 
     items_str = delimiter.join(items)
