@@ -91,8 +91,16 @@ def parse_xml(f_path, output_f_path):
         application_number = bibliographic_data["application-reference"]["document-id"]["doc-number"]
         _filing_date = bibliographic_data["application-reference"]["document-id"]["date"]
         filing_date = convert_date_string_format(_filing_date)
-        _priority_date = bibliographic_data.get("wo-priority-info", {}).get("priority-claim", {}).get("date")
-        priority_date = convert_date_string_format(_priority_date) if _priority_date else "unknown"
+
+        priority_date = ""
+        _priority_date_raw_items = bibliographic_data.get("wo-priority-info", {}).get("priority-claim")
+        if _priority_date_raw_items:
+            priority_date_raw_items = _priority_date_raw_items if isinstance(_priority_date_raw_items, list) else [_priority_date_raw_items]
+            priority_date_items = []
+            for item in priority_date_raw_items:
+                priority_date = item.get("date", "")
+                priority_date_items.append(priority_date)
+            priority_date = "\n".join(priority_date_items)
 
         _ipc_raw_items = bibliographic_data["classifications-ipcr"]["classification-ipcr"]
         ipc_raw_items = _ipc_raw_items if isinstance(_ipc_raw_items, list) else [_ipc_raw_items]
