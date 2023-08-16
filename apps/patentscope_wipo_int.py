@@ -80,7 +80,7 @@ def start_scrapper(site_name, action_type, target_year=None, target_start_week=N
 
 
 def parse_xml(f_path, output_f_path):
-    with open(f_path) as f:
+    with open(f_path, "r", encoding="utf-8") as f:
         raw_data = xmltodict.parse(f.read())
         bibliographic_data = raw_data["wo-international-application-status"]["wo-bibliographic-data"]
         publication_data = bibliographic_data["publication-reference"]["document-id"]
