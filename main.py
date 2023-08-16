@@ -227,7 +227,7 @@ if __name__ == '__main__':
                 target_end_week=int(sys.argv[5]),
                 scraping_target=sys.argv[6]
             )
-        elif sys.argv[2] == ACTION_CONVERT:
+        elif sys.argv[2] in [ACTION_PARSE, ACTION_CONVERT]:
             pwi_start_scrapper(
                 site_name=sys.argv[1],
                 action_type=sys.argv[2],
