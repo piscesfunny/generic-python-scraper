@@ -118,9 +118,12 @@ def parse_xml(f_path, output_f_path):
         applicant_raw_items = _applicant_raw_items if isinstance(_applicant_raw_items, list) else [_applicant_raw_items]
         applicants = parse_items(applicant_raw_items)
 
-        _inventor_raw_items = bibliographic_data['parties']['inventors']['inventor']
-        inventor_raw_items = _inventor_raw_items if isinstance(_inventor_raw_items, list) else [_inventor_raw_items]
-        inventors = parse_items(inventor_raw_items)
+        if 'inventors' not in bibliographic_data['parties']:
+            inventors = applicants
+        else:
+            _inventor_raw_items = bibliographic_data['parties']['inventors']['inventor']
+            inventor_raw_items = _inventor_raw_items if isinstance(_inventor_raw_items, list) else [_inventor_raw_items]
+            inventors = parse_items(inventor_raw_items)
 
         _agent_raw_items = bibliographic_data['parties']['agents']['agent']
         agent_raw_items = _agent_raw_items if isinstance(_agent_raw_items, list) else [_agent_raw_items]
