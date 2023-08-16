@@ -186,7 +186,7 @@ def parse_items(raw_items):
             address_data = address_book["address"]
             address_address = f'{address_data.get("address-1", "")}'
             address_country = f'{address_data.get("country", "")}'
-            address = address_address
+            address = address_address.replace("\n", " ")
             if address_country:
                 address += f" ({address_country})"
             item = f"{name}; {address}"
