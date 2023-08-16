@@ -183,10 +183,10 @@ def extract_substr_between_two_marks(text, mark1, mark2):
     return m.group(1) if m else None
 
 
-def csv2mdb(target_dir):
-    for f_path in os.listdir(target_dir):
+def csv2mdb(input_dir, output_dir):
+    for f_path in os.listdir(input_dir):
         filename, file_extension = os.path.splitext(f_path)
-        db_f_path = os.path.join(BASE_DIR, "db", f"{filename}.mdb")
+        db_f_path = os.path.join(output_dir, f"{filename}.mdb")
         if os.path.exists(db_f_path):
             print(f"Skipped file - {f_path}")
             continue
@@ -200,7 +200,7 @@ def csv2mdb(target_dir):
         con.setencoding(encoding='iso-8859-1')
 
         # RUN QUERY
-        strSQL = f"SELECT * INTO [patentscope] FROM [text;HDR=Yes;FMT=Delimited(,);Database={OUTPUT_RESULT_DIR}].{f_path};"
+        strSQL = f"SELECT * INTO [patentscope] FROM [text;HDR=Yes;FMT=Delimited(,);Database={input_dir}].{f_path};"
         cur = con.cursor()
         cur.execute(strSQL)
         con.commit()

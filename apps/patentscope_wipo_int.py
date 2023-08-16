@@ -5,8 +5,8 @@ from scrapy.crawler import CrawlerProcess
 
 from generic_scraper.spiders.patentscope_wipo_int import PatentScopeWipoSpider
 from utils.config import *
-from utils.constants import ACTION_SCRAPPING, ACTION_CONVERT
-from utils.helpers import write_results_to_csv, convert_date_string_format, write_results_to_txt, read_file
+from utils.constants import ACTION_SCRAPPING, ACTION_CONVERT, ACTION_PARSE
+from utils.helpers import write_results_to_csv, convert_date_string_format, write_results_to_txt, read_file, csv2mdb
 
 
 def start_scrapper(site_name, action_type, target_year=None, target_start_week=None, target_end_week=None,
@@ -38,7 +38,7 @@ def start_scrapper(site_name, action_type, target_year=None, target_start_week=N
 
         process.start()
 
-    elif action_type == ACTION_CONVERT:
+    elif action_type == ACTION_PARSE:
         output_dir = os.path.join(OUTPUT_RESULT_DIR, site_name, "processed")
         os.makedirs(output_dir, exist_ok=True)
 
@@ -76,6 +76,11 @@ def start_scrapper(site_name, action_type, target_year=None, target_start_week=N
                     print(e)
                     write_results_to_txt(failed_f_path, [f_path], "a")
                 print(f"progress - {idx + 1}/{len(f_paths)}")
+    elif action_type == ACTION_CONVERT:
+        csv_dir = os.path.join(OUTPUT_RESULT_DIR, site_name, "processed")
+        output_dir = os.path.join(OUTPUT_RESULT_DIR, site_name, "mdb")
+        os.makedirs(output_dir, exist_ok=True)
+        csv2mdb(csv_dir, output_dir)
     else:
         pass
 

@@ -4,6 +4,7 @@ ACTION_SCRAPPING = 'scraping'
 ACTION_DOWNLOAD = 'download'
 ACTION_FILTER = 'filter'
 ACTION_CONVERT = 'convert'
+ACTION_PARSE = 'parse'
 SCRAPPING_TARGET_LIST = 'list'
 SCRAPPING_TARGET_ITEM = 'item'
 
