@@ -1,4 +1,5 @@
-import pandas as pd
+import os.path
+
 import xmltodict
 from scrapy.crawler import CrawlerProcess
 
@@ -159,15 +160,18 @@ def parse_items(raw_items):
     delimiter = " ||| "
     items = []
     for raw_item in raw_items:
-        name = raw_item["addressbook"]["name"]["#text"]
-        address_data = raw_item["addressbook"]["address"]
-        address_address = f'{address_data.get("address-1", "")}'
-        address_country = f'{address_data.get("country", "")}'
-        address = address_address
-        if address_country:
-            address += f" ({address_country})"
-        item = f"{name}; {address}"
-        items.append(item)
+        _address_books = raw_item["addressbook"]
+        address_books = _address_books if isinstance(_address_books, list) else [_address_books]
+        for address_book in address_books:
+            name = address_book["name"]["#text"]
+            address_data = address_book["address"]
+            address_address = f'{address_data.get("address-1", "")}'
+            address_country = f'{address_data.get("country", "")}'
+            address = address_address
+            if address_country:
+                address += f" ({address_country})"
+            item = f"{name}; {address}"
+            items.append(item)
 
     items_str = delimiter.join(items)
     return items_str
