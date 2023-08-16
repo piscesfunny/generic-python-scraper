@@ -1,4 +1,5 @@
 import os.path
+import shutil
 
 import xmltodict
 from scrapy.crawler import CrawlerProcess
@@ -80,9 +81,17 @@ def start_scrapper(site_name, action_type, target_year=None, target_start_week=N
                 print(f"progress - {idx + 1}/{len(f_paths)}")
     elif action_type == ACTION_CONVERT:
         csv_dir = os.path.join(OUTPUT_RESULT_DIR, site_name, "processed")
+        csv_backup_dir = os.path.join(OUTPUT_RESULT_DIR, site_name, "csv")
         output_dir = os.path.join(OUTPUT_RESULT_DIR, site_name, "mdb")
         os.makedirs(output_dir, exist_ok=True)
+        os.makedirs(csv_backup_dir, exist_ok=True)
+
         csv2mdb(csv_dir, output_dir)
+
+        for filename in os.listdir(csv_dir):
+            source = os.path.join(csv_dir, filename)
+            destination = os.path.join(csv_backup_dir, filename)
+            shutil.move(source, destination)
     else:
         pass
 
