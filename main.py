@@ -21,8 +21,10 @@ from apps.parts_cat import start_scrapper as parts_cat_start_scrapper
 from apps.general_kinematics import start_scrapper as general_kinematics_start_scrapper
 from apps.kjdb import start_scrapper as kjdb_start_scrapper
 from apps.sciencedaily import start_scrapper as science_daily_start_scrapper
-
 from apps.patentscope_wipo_int import start_scrapper as pwi_start_scrapper
+from apps.hepatoday import start_scrapper as hepa_today_start_scrapper
+
+
 from utils.config import *
 from utils.constants import *
 from utils.helpers import validate_parameter
@@ -248,4 +250,13 @@ if __name__ == '__main__':
             target_start_date=sys.argv[3],
             target_end_date=sys.argv[4],
             scraping_target=sys.argv[5]
+        )
+
+    if sys.argv[1] == 'hepatoday':
+        hepa_today_start_scrapper(
+            site_name=sys.argv[1],
+            action_type=sys.argv[2],
+            scraping_target=sys.argv[3],
+            start_vol_idx=sys.argv[4],
+            end_vol_idx=sys.argv[5],
         )
