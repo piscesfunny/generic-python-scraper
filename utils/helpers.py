@@ -9,6 +9,7 @@ import pandas as pd
 import pyodbc
 import pypyodbc
 import wget
+from chromedriver_py import binary_path
 
 from selenium import webdriver
 
@@ -59,7 +60,7 @@ def initialize_chrome_driver(
 
     options.add_experimental_option('prefs', prefs)
 
-    driver = webdriver.Chrome(executable_path=executable_path, chrome_options=options)
+    driver = webdriver.Chrome(executable_path=binary_path, chrome_options=options)
 
     return driver
 
