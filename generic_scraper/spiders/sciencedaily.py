@@ -45,14 +45,14 @@ class ScienceDailySpider(scrapy.Spider):
     def parse(self, response, **kwargs):
         if self.scraping_target == SCRAPPING_TARGET_LIST:
             driver = initialize_chrome_driver()
-            # save_dir = os.path.join(OUTPUT_RESULT_DIR, self.name)
             driver.get(f"{response.url}/news")
-            # driver.execute_script('window.print();')
 
             WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, 'directory')))
+            time.sleep(5)
 
             driver.find_element_by_css_selector('ul#directory > li:first-child > a').click()
             time.sleep(1)
+
             driver.find_element_by_css_selector('ul#list > li:last-child > a').click()
             time.sleep(1)
 
