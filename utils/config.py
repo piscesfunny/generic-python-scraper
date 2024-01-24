@@ -26,3 +26,11 @@ LOG_DIR = os.path.join(BASE_DIR, 'logs')
 WEBDRIVER_DIR = os.path.join(BASE_DIR, 'webdriver')
 
 PAGE_COUNT_PER_THREAD = os.getenv('PAGE_COUNT_PER_THREAD')
+
+HEADERS = {
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 '
+                  'Safari/537.36'
+}
+
+DEFAULT_REQUEST_TIMEOUT = 30
+DEFAULT_WEB_DRIVER_WAIT_TIMEOUT = 30
