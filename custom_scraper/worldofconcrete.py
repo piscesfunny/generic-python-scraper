@@ -63,49 +63,53 @@ class WorldOfConcreteSpider(CustomBaseSpider):
         success_item_urls = list(set(success_item_urls))
         for idx, item in enumerate(items):
             url = item.get("item_url")
-            exhibitor = item.get("item_title")
+            exhibitor = item.get("item_title", f"unknown_{idx}")
             if url in success_item_urls:
                 print(f"Already downloaded - url: {url} - exhibitor: {exhibitor}")
                 continue
 
-            save_dir = os.path.join(self.result_dir, exhibitor)
-            os.makedirs(save_dir, exist_ok=True)
-
+            save_dir = os.path.join(self.result_dir, str(exhibitor))
             driver = initialize_chrome_driver(printable=True, save_dir=save_dir)
             try:
                 print(f"downloading - {idx + 1}/{len(items)} - url: {url}")
                 driver.get(url)
                 time.sleep(2)
-                scroll_to_bottom(driver, time_delay=1)
+                driver.execute_script("window.scrollBy({left: 0, top: 600, behavior: 'smooth'});")
 
                 thumbnail_elements = driver.find_elements(By.CSS_SELECTOR, "div.showcase-thumbnails > figure > a")
-                media_urls = []
+                media_items = []
                 for i, e in enumerate(thumbnail_elements):
-                    if i > 0:
-                        e.click()
-                        time.sleep(2)
+                    e.click()
+                    time.sleep(2)
                     soup = BeautifulSoup(driver.page_source, 'html.parser')
                     video_el = soup.select_one("div.showroom-media-image_wrapper video")
                     video_url = video_el.attrs.get("src") if video_el else None
                     image_el = soup.select_one("div.showroom-media-image_wrapper img")
                     image_url = image_el.attrs.get("src") if image_el else None
                     if video_url:
-                        media_urls.append(video_url)
+                        media_items.append({"media_type": "video", "url": video_url})
                     if image_url:
-                        media_urls.append(image_url)
+                        media_items.append({"media_type": "image", "url": image_url})
 
-                if not media_urls:
+                if not media_items:
                     print("No content")
                     success_items = [{"item_title": exhibitor, "item_url": url}]
                     write_results_to_csv(success_f_path, success_items)
                     driver.close()
                     continue
 
-                for url in media_urls:
-                    f_name = os.path.basename(url)
-                    f_path = os.path.join(self.result_dir, f_name)
+                os.makedirs(save_dir, exist_ok=True)
+                for item in media_items:
+                    url = item.get("url")
+                    media_type = item.get("media_type")
+                    if media_type == "image":
+                        f_name = f"{os.path.basename(url)[-64:]}.png"
+                    else:
+                        f_name = os.path.basename(url)
+                    f_path = os.path.join(save_dir, f_name)
                     download_file(url, f_path)
 
+                scroll_to_bottom(driver, time_delay=1)
                 driver.execute_script("window.print();")
 
                 success_items = [{"item_title": exhibitor, "item_url": url}]
