@@ -62,17 +62,17 @@ class WorldOfConcreteSpider(CustomBaseSpider):
         success_item_urls = [item.get("item_url") for item in success_items]
         success_item_urls = list(set(success_item_urls))
         for idx, item in enumerate(items):
-            url = item.get("item_url")
+            item_url = item.get("item_url")
             exhibitor = item.get("item_title", f"unknown_{idx}")
-            if url in success_item_urls:
-                print(f"Already downloaded - url: {url} - exhibitor: {exhibitor}")
+            if item_url in success_item_urls:
+                print(f"Already downloaded - url: {item_url} - exhibitor: {exhibitor}")
                 continue
 
             save_dir = os.path.join(self.result_dir, str(exhibitor))
             driver = initialize_chrome_driver(printable=True, save_dir=save_dir)
             try:
-                print(f"downloading - {idx + 1}/{len(items)} - url: {url}")
-                driver.get(url)
+                print(f"downloading - {idx + 1}/{len(items)} - url: {item_url}")
+                driver.get(item_url)
                 time.sleep(2)
                 driver.execute_script("window.scrollBy({left: 0, top: 600, behavior: 'smooth'});")
 
@@ -93,26 +93,26 @@ class WorldOfConcreteSpider(CustomBaseSpider):
 
                 if not media_items:
                     print("No content")
-                    success_items = [{"item_title": exhibitor, "item_url": url}]
+                    success_items = [{"item_title": exhibitor, "item_url": item_url}]
                     write_results_to_csv(success_f_path, success_items)
                     driver.close()
                     continue
 
                 os.makedirs(save_dir, exist_ok=True)
                 for item in media_items:
-                    url = item.get("url")
+                    media_url = item.get("url")
                     media_type = item.get("media_type")
                     if media_type == "image":
-                        f_name = f"{os.path.basename(url)[-64:]}.png"
+                        f_name = f"{os.path.basename(media_url)[-64:]}.png"
                     else:
-                        f_name = os.path.basename(url)
+                        f_name = os.path.basename(media_url)
                     f_path = os.path.join(save_dir, f_name)
-                    download_file(url, f_path)
+                    download_file(media_url, f_path)
 
                 scroll_to_bottom(driver, time_delay=1)
                 driver.execute_script("window.print();")
 
-                success_items = [{"item_title": exhibitor, "item_url": url}]
+                success_items = [{"item_title": exhibitor, "item_url": item_url}]
                 write_results_to_csv(success_f_path, success_items)
             except Exception as e:
                 print(e)
