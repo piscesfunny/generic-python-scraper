@@ -12,6 +12,7 @@ import wget
 from chromedriver_py import binary_path
 
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 
 from utils.config import WEBDRIVER_DIR, OUTPUT_RESULT_DIR, BASE_DIR
 from utils.logging import ScraperLogger
@@ -60,7 +61,8 @@ def initialize_chrome_driver(
 
     options.add_experimental_option('prefs', prefs)
 
-    driver = webdriver.Chrome(executable_path=binary_path, chrome_options=options)
+    chromium_service = Service(executable_path=binary_path)
+    driver = webdriver.Chrome(options=options, service=chromium_service)
 
     return driver
 
