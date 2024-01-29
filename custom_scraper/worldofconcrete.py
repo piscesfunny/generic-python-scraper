@@ -52,8 +52,8 @@ class WorldOfConcreteSpider(CustomBaseSpider):
                         print(f"Failed! - url: {url}")
                         print(e)
                 items += sub_items
-                write_results_to_csv(list_f_path, items)
 
+            write_results_to_csv(list_f_path, items)
             driver.close()
 
         # Start downloading
