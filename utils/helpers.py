@@ -8,6 +8,7 @@ from datetime import datetime
 import pandas as pd
 import pyodbc
 import pypyodbc
+import requests
 import wget
 from chromedriver_py import binary_path
 
@@ -222,3 +223,25 @@ def convert_date_string_format(
     formatted_date = date_obj.strftime(desired_format)
 
     return formatted_date
+
+
+def download_file(url, file_path):
+    """
+    Download a file from a URL and save it to a local file path.
+    """
+    try:
+        # Send a GET request to the URL
+        response = requests.get(url, stream=True)
+
+        # Check if the request was successful
+        response.raise_for_status()
+
+        # Open the file in binary write mode
+        with open(file_path, 'wb') as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                # Write the contents to the file
+                if chunk:
+                    file.write(chunk)
+        return f"File downloaded successfully: {file_path}"
+    except requests.exceptions.RequestException as e:
+        return f"Error: {e}"
