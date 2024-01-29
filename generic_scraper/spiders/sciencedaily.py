@@ -50,15 +50,14 @@ class ScienceDailySpider(scrapy.Spider):
             WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, 'directory')))
             time.sleep(5)
 
-            driver.find_element_by_css_selector('ul#directory > li:first-child > a').click()
+            driver.find_element(By.CSS_SELECTOR, 'ul#directory > li:first-child > a').click()
             time.sleep(1)
 
-            driver.find_element_by_css_selector('ul#list > li:last-child > a').click()
+            driver.find_element(By.CSS_SELECTOR, 'ul#list > li:last-child > a').click()
             time.sleep(1)
 
             for i in range(0, 2):
-                driver.find_element_by_id('load_more_stories').click()
-                # page_source = scroll_to_bottom(driver, time_delay=1)
+                driver.find_element(By.ID, 'load_more_stories').click()
                 time.sleep(1)
 
             el_selector = Selector(text=driver.page_source)
