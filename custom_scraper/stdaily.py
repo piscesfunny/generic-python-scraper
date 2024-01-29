@@ -27,7 +27,7 @@ class STDailySpider(CustomBaseSpider):
         self.end_date = end_date
 
     def run(self, skip_item_list=False):
-        list_f_path = os.path.join(self.item_list_dir, f"list_{self.start_date}_{self.end_date}")
+        list_f_path = os.path.join(self.item_list_dir, f"list_{self.start_date}_{self.end_date}.csv")
         items = []
         urls = []
 
@@ -76,7 +76,7 @@ class STDailySpider(CustomBaseSpider):
             driver.get(url)
             WebDriverWait(driver, DEFAULT_WEB_DRIVER_WAIT_TIMEOUT
                           ).until(EC.presence_of_element_located((By.ID, "btnPrint")))
-            driver.find_element_by_id("btnPrint").click()
+            driver.find_element(By.ID, "btnPrint").click()
             time.sleep(3)
 
             pyautogui.hotkey('ctrl', 's')
