@@ -62,16 +62,17 @@ class WorldOfConcreteSpider(CustomBaseSpider):
         success_item_urls = [item.get("item_url") for item in success_items]
         success_item_urls = list(set(success_item_urls))
         for idx, item in enumerate(items):
+            progress = f"{idx + 1}/{len(items)}"
             item_url = item.get("item_url")
             exhibitor = item.get("item_title", f"unknown_{idx}")
             if item_url in success_item_urls:
-                print(f"Already downloaded - url: {item_url} - exhibitor: {exhibitor}")
+                print(f"Already downloaded - {progress} - url: {item_url} - exhibitor: {exhibitor}")
                 continue
 
             save_dir = os.path.join(self.result_dir, str(exhibitor))
             driver = initialize_chrome_driver(printable=True, save_dir=save_dir)
             try:
-                print(f"downloading - {idx + 1}/{len(items)} - url: {item_url}")
+                print(f"downloading - {progress} - url: {item_url} - exhibitor: {exhibitor}")
                 driver.get(item_url)
                 time.sleep(2)
                 driver.execute_script("window.scrollBy({left: 0, top: 600, behavior: 'smooth'});")
