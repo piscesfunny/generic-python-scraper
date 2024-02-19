@@ -7,9 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
-
 from custom_scraper.base import CustomBaseSpider
-from utils.config import OUTPUT_STATUS_DIR
 from utils.helpers import initialize_chrome_driver, write_results_to_txt, read_file
 
 
@@ -83,7 +81,7 @@ class ScienceDailySpider(CustomBaseSpider):
             driver.close()
 
         success_f_name = os.path.splitext(os.path.basename(list_f_path))[0]
-        success_f_path = os.path.join(OUTPUT_STATUS_DIR, f'{success_f_name}_success.txt')
+        success_f_path = os.path.join(self.status_dir, f'{success_f_name}_success.txt')
         _prev_success_urls = read_file(success_f_path, 'txt') if os.path.exists(success_f_path) else []
         prev_success_urls = list(set(_prev_success_urls))
 
