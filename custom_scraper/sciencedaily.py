@@ -31,6 +31,17 @@ class ScienceDailySpider(CustomBaseSpider):
             WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, 'directory')))
             time.sleep(5)
 
+            # scroll down
+            driver.execute_script("window.scrollBy({left: 0, top: 600, behavior: 'smooth'});")
+            time.sleep(5)
+
+            # remove element with id `fixed_container_bottom`
+            driver.execute_script("""
+            var element = document.querySelector("#fixed_container_bottom");
+            if (element)
+                element.parentNode.removeChild(element);
+            """)
+
             all_iframes = driver.find_elements(By.TAG_NAME, "iframe")
             if len(all_iframes) > 0:
                 print("Ad Found\n")
@@ -45,9 +56,6 @@ class ScienceDailySpider(CustomBaseSpider):
             else:
                 print('No frames found')
 
-            driver.find_element(By.CSS_SELECTOR, 'ul#directory > li:first-child > a').click()
-            time.sleep(1)
-
             driver.find_element(By.CSS_SELECTOR, 'ul#list > li:last-child > a').click()
             time.sleep(1)
 
@@ -56,9 +64,7 @@ class ScienceDailySpider(CustomBaseSpider):
                 time.sleep(1)
 
             el_selector = Selector(text=driver.page_source)
-            first_page_weekdays = el_selector.css('#headlines > div::text').getall()
-            other_page_weekdays = el_selector.css('#headlines > div > div > div::text').getall()
-            weekdays = first_page_weekdays + other_page_weekdays
+            weekdays = el_selector.css('div#headlines h3.headlines-date::text').getall()
             n_weekdays = 0
             start_date_dt = datetime.strptime(self.start_date, "%Y-%m-%d")
             for weekday in weekdays:
