@@ -58,7 +58,7 @@ class PatentScopeWipoSpider(scrapy.Spider):
 
             year_elem_id = 'weeklyPublicationForm:currGazette:input'
             WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, year_elem_id)))
-            select = Select(driver.find_element_by_id('weeklyPublicationForm:currGazette:input'))
+            select = Select(driver.find_element(By.ID, year_elem_id))
 
             for i in range(self.target_start_week, self.target_end_week + 1):
                 if i < 10:
@@ -74,7 +74,7 @@ class PatentScopeWipoSpider(scrapy.Spider):
 
                 excel_download_elem_id = 'weeklyPublicationForm:j_idt1240'
                 WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.ID, excel_download_elem_id)))
-                driver.find_element_by_id(excel_download_elem_id).click()
+                driver.find_element(By.ID, excel_download_elem_id).click()
                 time.sleep(5)
         else:
             for i in range(self.target_start_week, self.target_end_week + 1):
@@ -119,7 +119,7 @@ class PatentScopeWipoSpider(scrapy.Spider):
                             By.CSS_SELECTOR, "ul.ui-tabs-nav > li"))
                         )
 
-                        driver.find_element_by_css_selector("ul.ui-tabs-nav > li:first-child > a").click()
+                        driver.find_element(By.CSS_SELECTOR("ul.ui-tabs-nav > li:first-child > a")).click()
                         time.sleep(1)
 
                         main_data_elems_css = '.ps-biblio-data--biblio-card > div'
@@ -136,14 +136,14 @@ class PatentScopeWipoSpider(scrapy.Spider):
                             write_results_to_txt(ignored_f_path, [request_url], "a")
                             continue
 
-                        driver.find_element_by_css_selector("ul.ui-tabs-nav > li:last-child > a").click()
+                        driver.find_element(By.CSS_SELECTOR("ul.ui-tabs-nav > li:last-child > a")).click()
                         WebDriverWait(driver, 30).until(EC.presence_of_element_located(
                             (By.CSS_SELECTOR, ".patent-documents > div"))
                         )
 
-                        driver.find_element_by_css_selector(
+                        driver.find_element(By.CSS_SELECTOR(
                             ".patent-documents > div:first-child tbody > tr > td:last-child > div > span:last-child > a"
-                        ).click()
+                        )).click()
                         time.sleep(5)
 
                         current_success_urls.append(request_url)
