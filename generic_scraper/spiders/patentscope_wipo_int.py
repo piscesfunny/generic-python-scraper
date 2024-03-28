@@ -43,7 +43,14 @@ class PatentScopeWipoSpider(scrapy.Spider):
         self.result_list_err_f_path = param['result_list_err_f_path']
         self.feed_uri = param['feed_uri']
 
-        self.min_date = datetime.strptime("01.08.2022", "%d.%m.%Y")
+        self.min_date = datetime.strptime("13.07.2023", "%d.%m.%Y")
+
+        self.result_dir = os.path.join(OUTPUT_RESULT_DIR, self.name)
+        self.list_dir = os.path.join(OUTPUT_LIST_DIR, self.name)
+        self.status_dir = os.path.join(OUTPUT_STATUS_DIR, self.name)
+        os.makedirs(self.result_dir, exist_ok=True)
+        os.makedirs(self.list_dir, exist_ok=True)
+        os.makedirs(self.status_dir, exist_ok=True)
 
     def start_requests(self):
         for url in self.start_urls:
@@ -83,15 +90,16 @@ class PatentScopeWipoSpider(scrapy.Spider):
                 else:
                     week_num = f'{self.target_year}{i}'
 
-                download_dir = os.path.join(OUTPUT_RESULT_DIR, self.name, "raw", week_num)
+                download_dir = os.path.join(self.result_dir, "raw", week_num)
                 os.makedirs(download_dir, exist_ok=True)
                 driver = initialize_chrome_driver(save_dir=download_dir)
 
-                input_f_name = f'{self.name}_list_{week_num}.csv'
-                input_f_path = os.path.join(OUTPUT_LIST_DIR, input_f_name)
-                success_f_path = os.path.join(OUTPUT_STATUS_DIR, f'{self.name}_list_{week_num}_success.txt')
-                ignored_f_path = os.path.join(OUTPUT_STATUS_DIR, f'{self.name}_list_{week_num}_ignored.txt')
+                status_dir = os.path.join(self.status_dir, self.action_type)
+                os.makedirs(status_dir, exist_ok=True)
+                success_f_path = os.path.join(status_dir, f'list_{week_num}_success.txt')
+                ignored_f_path = os.path.join(status_dir, f'list_{week_num}_ignored.txt')
 
+                input_f_path = os.path.join(self.list_dir, f"{week_num}.csv")
                 items = read_file(input_f_path)
                 if len(items) < 1:
                     continue
@@ -118,8 +126,7 @@ class PatentScopeWipoSpider(scrapy.Spider):
                         WebDriverWait(driver, 30).until(EC.presence_of_element_located((
                             By.CSS_SELECTOR, "ul.ui-tabs-nav > li"))
                         )
-
-                        driver.find_element(By.CSS_SELECTOR("ul.ui-tabs-nav > li:first-child > a")).click()
+                        driver.find_element(By.CSS_SELECTOR, "ul.ui-tabs-nav > li:first-child > a").click()
                         time.sleep(1)
 
                         main_data_elems_css = '.ps-biblio-data--biblio-card > div'
@@ -136,14 +143,13 @@ class PatentScopeWipoSpider(scrapy.Spider):
                             write_results_to_txt(ignored_f_path, [request_url], "a")
                             continue
 
-                        driver.find_element(By.CSS_SELECTOR("ul.ui-tabs-nav > li:last-child > a")).click()
+                        driver.find_element(By.CSS_SELECTOR, "ul.ui-tabs-nav > li:last-child > a").click()
                         WebDriverWait(driver, 30).until(EC.presence_of_element_located(
                             (By.CSS_SELECTOR, ".patent-documents > div"))
                         )
 
-                        driver.find_element(By.CSS_SELECTOR(
-                            ".patent-documents > div:first-child tbody > tr > td:last-child > div > span:last-child > a"
-                        )).click()
+                        driver.find_element(By.CSS_SELECTOR, ".patent-documents > div:first-child tbody > tr > "
+                                                             "td:last-child > div > span:last-child > a").click()
                         time.sleep(5)
 
                         current_success_urls.append(request_url)

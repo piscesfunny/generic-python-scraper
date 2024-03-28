@@ -1,7 +1,7 @@
 Scrapy~=2.11.0
 python-dotenv~=0.15.0
 itemadapter~=0.2.0
-selenium~=4.17.2
+selenium~=4.19.0
 wget~=3.2
 requests~=2.25.1
 scraperapi-sdk==0.2.2
