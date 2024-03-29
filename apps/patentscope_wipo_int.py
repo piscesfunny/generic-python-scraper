@@ -58,11 +58,10 @@ def start_scrapper(site_name, action_type, target_year=None, target_start_week=N
                 for f in os.listdir(week_dir)
                 if os.path.isfile(os.path.join(week_dir, f))
             ]
-            output_f_name = f"{site_name}_{week}.csv"
-            output_f_path = os.path.join(output_dir, output_f_name)
+            output_f_path = os.path.join(output_dir, f"{week}.csv")
 
-            success_f_path = os.path.join(status_dir, f"{site_name}_{week}_success.txt")
-            failed_f_path = os.path.join(status_dir, f"{site_name}_{week}_failed.txt")
+            success_f_path = os.path.join(status_dir, f"{week}_success.txt")
+            failed_f_path = os.path.join(status_dir, f"{week}_failed.txt")
 
             _prev_success_f_paths = read_file(success_f_path, 'txt') if os.path.exists(success_f_path) else []
             prev_success_f_paths = list(set(_prev_success_f_paths))
