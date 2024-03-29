@@ -1,4 +1,5 @@
 import os
+import random
 import time
 from datetime import datetime
 
@@ -150,13 +151,15 @@ class PatentScopeWipoSpider(scrapy.Spider):
 
                         driver.find_element(By.CSS_SELECTOR, ".patent-documents > div:first-child tbody > tr > "
                                                              "td:last-child > div > span:last-child > a").click()
-                        time.sleep(5)
 
                         current_success_urls.append(request_url)
                         write_results_to_txt(success_f_path, [request_url], "a")
                     except Exception as e:
                         print("failed_url: ", request_url)
                         print(e)
+
+                    t_delay = random.randint(5, 10)
+                    time.sleep(t_delay)
 
                 success_urls = prev_success_urls + current_success_urls
                 write_results_to_txt(success_f_path, success_urls, "w")
