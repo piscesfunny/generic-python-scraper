@@ -119,7 +119,7 @@ class PatentScopeWipoSpider(scrapy.Spider):
                     doc_id = original_doc_id.replace('/', '')
                     request_url = f'{self.base_url}/search/en/detail.jsf?docId={doc_id}&_gid={week_num}'
                     if request_url in urls_to_skip:
-                        print(f"Skipped - request_url: {request_url}")
+                        print(f"Skipped - {index+1}/{len(items)} - request_url: {request_url}")
                         continue
 
                     try:
