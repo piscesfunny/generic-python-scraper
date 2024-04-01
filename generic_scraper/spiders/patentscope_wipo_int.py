@@ -163,3 +163,5 @@ class PatentScopeWipoSpider(scrapy.Spider):
 
                 success_urls = prev_success_urls + current_success_urls
                 write_results_to_txt(success_f_path, success_urls, "w")
+
+                print(f"Downloaded - {len(urls_to_skip)}/{len(items)}")
