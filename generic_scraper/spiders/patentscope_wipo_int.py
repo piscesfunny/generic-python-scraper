@@ -164,4 +164,8 @@ class PatentScopeWipoSpider(scrapy.Spider):
                 success_urls = prev_success_urls + current_success_urls
                 write_results_to_txt(success_f_path, success_urls, "w")
 
-                print(f"Downloaded - {len(urls_to_skip)}/{len(items)}")
+                delta = len(items) - len(urls_to_skip)
+                if delta < 1:
+                    print(f"All items have been downloaded")
+                else:
+                    print(f"Missed {delta} items. Please run the script again until all items are downloaded.")
