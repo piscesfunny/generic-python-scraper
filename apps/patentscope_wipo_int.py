@@ -133,28 +133,30 @@ def parse_xml(f_path, output_f_path):
             ipc_items.append(ipc_item)
         ipc = "; ".join(ipc_items)
 
-        _applicant_raw_items = bibliographic_data['parties']['applicants']['applicant']
+        _applicant_raw_items = bibliographic_data.get('parties', {}).get('applicants', {}).get('applicant', [])
         applicant_raw_items = _applicant_raw_items if isinstance(_applicant_raw_items, list) else [_applicant_raw_items]
         applicants = parse_items(applicant_raw_items)
 
-        if 'inventors' not in bibliographic_data['parties']:
+        if 'inventors' not in bibliographic_data.get('parties', {}):
             inventors = applicants
         else:
-            _inventor_raw_items = bibliographic_data['parties']['inventors']['inventor']
+            _inventor_raw_items = bibliographic_data.get('parties', {}).get('inventors', {}).get('inventor', {})
             inventor_raw_items = _inventor_raw_items if isinstance(_inventor_raw_items, list) else [_inventor_raw_items]
             inventors = parse_items(inventor_raw_items)
 
-        _agent_raw_items = bibliographic_data['parties']['agents']['agent']
+        _agent_raw_items = bibliographic_data.get('parties', {}).get('agents', {}).get('agent', [])
         agent_raw_items = _agent_raw_items if isinstance(_agent_raw_items, list) else [_agent_raw_items]
         agents = parse_items(agent_raw_items)
 
-        titles = bibliographic_data['invention-title']
+        _titles = bibliographic_data['invention-title']
+        titles = _titles if isinstance(_titles, list) else [_titles]
         title_en = ""
         for title in titles:
             if title["@lang"].lower() == "en":
-                title_en = title["#text"]
+                title_en = title["#text"] if "#text" in title else title["u"]
                 break
-        abstracts = raw_data["wo-international-application-status"]['abstract']
+        _abstracts = raw_data["wo-international-application-status"]['abstract']
+        abstracts = _abstracts if isinstance(_abstracts, list) else [_abstracts]
         abstract_en = ""
         for abstract in abstracts:
             if abstract["@lang"].lower() == "en":
